@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,6 +19,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import java.io.FileDescriptor;
+import java.io.IOException;
 
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
     Button bCamera;
@@ -72,9 +76,26 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
-            imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+            Bitmap bmp = null;
+            try {
+                bmp = getBitmapFromUri(selectedImage);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            imageView.setImageBitmap(bmp);
         }
     }
+
+    private Bitmap getBitmapFromUri(Uri uri) throws IOException {
+        ParcelFileDescriptor parcelFileDescriptor =
+                getContentResolver().openFileDescriptor(uri, "r");
+        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+        Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+        parcelFileDescriptor.close();
+        return image;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
