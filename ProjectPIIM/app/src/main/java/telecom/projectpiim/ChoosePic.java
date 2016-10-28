@@ -23,8 +23,9 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     Button bCamera;
     Button bGallery;
     Button bAnalyze;
-    private static final int CAMERA_REQUEST = 1888;
-    private static int RESULT_LOAD_IMAGE = 1;
+    private static final int CAMERA_REQUEST = 1;
+    private static int RESULT_LOAD_IMAGE = 2;
+    private static final int ANALYSIS_RESULT = 3;
     private ImageView imageView;
 
     @Override
@@ -49,6 +50,13 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             }
         });
         bAnalyze = (Button) findViewById(R.id.bAnalyze);
+        bAnalyze.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent analysisIntent = new Intent(ChoosePic.this, Analysis.class);
+                ChoosePic.this.startActivity(analysisIntent);
+            }
+        });
     }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {

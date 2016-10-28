@@ -34,4 +34,14 @@
         android:layout_marginEnd="20dp"
         android:layout_marginTop="148dp"
         android:id="@+id/imgResult" />
+
+    <Button
+        android:text="Go to Website"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bWeb"
+        android:textSize="24sp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="84dp" />
 </RelativeLayout>
