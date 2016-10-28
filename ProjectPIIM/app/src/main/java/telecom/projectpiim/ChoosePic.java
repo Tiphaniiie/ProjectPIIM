@@ -1,6 +1,7 @@
 package telecom.projectpiim;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -28,6 +29,17 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private static final int ANALYSIS_RESULT = 3;
     private ImageView imageView;
 
+    public static Bitmap scaleDownBitmap(Bitmap photo, int newHeight, Context context) {
+
+        final float densityMultiplier = context.getResources().getDisplayMetrics().density;
+
+        int h= (int) (newHeight*densityMultiplier);
+        int w= (int) (h * photo.getWidth()/((double) photo.getHeight()));
+
+        photo=Bitmap.createScaledBitmap(photo, w, h, true);
+
+        return photo;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +65,13 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         bAnalyze.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+                Bundle extras = new Bundle();
+                imageView.buildDrawingCache();
+                Bitmap bmp = imageView.getDrawingCache();
+                bmp = scaleDownBitmap(bmp, 100, getBaseContext());
+                extras.putParcelable("Bitmap", bmp);
                 Intent analysisIntent = new Intent(ChoosePic.this, Analysis.class);
+                analysisIntent.putExtras(extras);
                 ChoosePic.this.startActivity(analysisIntent);
             }
         });

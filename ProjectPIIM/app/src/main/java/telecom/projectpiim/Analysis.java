@@ -1,6 +1,7 @@
 package telecom.projectpiim;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +18,7 @@ public class Analysis extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_analysis);
+        imgResult = (ImageView) findViewById(R.id.imgResult);
         bWeb = (Button) findViewById(R.id.bWeb);
         bWeb.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -25,6 +27,9 @@ public class Analysis extends AppCompatActivity {
                 startActivity(webIntent);
             }
         });
+        Bundle extras = getIntent().getExtras();
+        Bitmap bmp = (Bitmap) extras.getParcelable("Bitmap");
+        imgResult.setImageBitmap(bmp);
 
     }
 
