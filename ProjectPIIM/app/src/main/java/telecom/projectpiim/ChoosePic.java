@@ -9,11 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +22,7 @@ import java.io.IOException;
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
     Button bCamera;
     Button bGallery;
+    Button bAnalyze;
     private static final int CAMERA_REQUEST = 1888;
     private static int RESULT_LOAD_IMAGE = 1;
     private ImageView imageView;
@@ -35,17 +32,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_pic);
         this.imageView = (ImageView)this.findViewById(R.id.imageView);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
         bCamera = (Button) findViewById(R.id.bCamera);
         bCamera.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -62,6 +48,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
             }
         });
+        bAnalyze = (Button) findViewById(R.id.bAnalyze);
     }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
@@ -121,6 +108,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
     @Override
     public void onClick(View view) {
-        Log.i("ChoosePic", "here");
+
     }
 }

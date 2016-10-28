@@ -41,4 +41,13 @@
         android:layout_above="@+id/imageView"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="63dp" />
+
+    <Button
+        android:text="Analyze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="87dp"
+        android:id="@+id/bAnalyze" />
 </RelativeLayout>
