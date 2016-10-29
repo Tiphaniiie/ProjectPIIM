@@ -29,7 +29,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile files('libs/javacv.jar')
     compile files('libs/javacpp.jar')
-    compile files('libs/ffmpeg-android-arm.jar')
     compile files('libs/opencv-windows-x86_64.jar')
     compile files('libs/opencv.jar')
 }

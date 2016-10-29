@@ -30,10 +30,10 @@
         android:layout_height="wrap_content"
         app:srcCompat="@mipmap/ic_launcher"
         android:layout_below="@+id/tResult"
-        android:layout_alignEnd="@+id/tResult"
-        android:layout_marginEnd="20dp"
         android:layout_marginTop="148dp"
-        android:id="@+id/imgResult" />
+        android:id="@+id/imgResult"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:text="Go to Website"

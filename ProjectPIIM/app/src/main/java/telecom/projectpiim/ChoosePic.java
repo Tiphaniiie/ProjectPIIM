@@ -26,7 +26,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     Button bAnalyze;
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
-    private static final int ANALYSIS_RESULT = 3;
     private ImageView imageView;
 
     public static Bitmap scaleDownBitmap(Bitmap photo, int newHeight, Context context) {
