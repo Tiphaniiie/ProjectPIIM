@@ -1,4 +1,4 @@
-package telecom.projectpiim;
+package telecom.mypiim;
 
 import android.app.Activity;
 import android.content.Context;
@@ -33,9 +33,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     String mCurrentPhotoPath;
-    SpeMat pic;
-    Bitmap image;
-    ComparePics comp;
 
     private File createImageFile() throws IOException {
         // Create an image file name
@@ -73,29 +70,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             }
         }
     }
-    private void setPic() {
-        // Get the dimensions of the View
-        int targetW = imageView.getWidth();
-        int targetH = imageView.getHeight();
 
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
-
-        // Decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-        imageView.setImageBitmap(bitmap);
-    }
     public static Bitmap scaleDownBitmap(Bitmap photo, int newHeight, Context context) {
 
         final float densityMultiplier = context.getResources().getDisplayMetrics().density;
@@ -134,22 +109,40 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 Bundle extras = new Bundle();
                 imageView.buildDrawingCache();
                 Bitmap bmp = imageView.getDrawingCache();
-                //bmp = scaleDownBitmap(bmp, 100, getBaseContext());
-                pic = new SpeMat(bmp, mCurrentPhotoPath);
-                bmp =pic.getPic();
-                comp = new ComparePics(pic);
-                        comp.calcDist();
+                bmp = scaleDownBitmap(bmp, 100, getBaseContext());
                 extras.putParcelable("Bitmap", bmp);
                 Intent analysisIntent = new Intent(ChoosePic.this, Analysis.class);
                 analysisIntent.putExtras(extras);
-
                 ChoosePic.this.startActivity(analysisIntent);
             }
         });
     }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            setPic();
+            //Bitmap photo = (Bitmap) data.getExtras().get("data");
+            //Bundle extras = data.getExtras();
+            //Bitmap photo = (Bitmap) extras.get("data");
+            // Get the dimensions of the View
+            int targetW = imageView.getWidth();
+            int targetH = imageView.getHeight();
+
+            // Get the dimensions of the bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+            //BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
+
+            // Determine how much to scale down the image
+            int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+            // Decode the image file into a Bitmap sized to fill the View
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+            bmOptions.inPurgeable = true;
+
+            Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+            imageView.setImageBitmap(bitmap);
         }
         if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
             Uri selectedImage = data.getData();
@@ -157,7 +150,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
             cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            mCurrentPhotoPath = cursor.getString(columnIndex);
+            String picturePath = cursor.getString(columnIndex);
             cursor.close();
             Bitmap bmp = null;
             try {

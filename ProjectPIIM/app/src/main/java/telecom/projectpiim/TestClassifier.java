@@ -3,6 +3,7 @@ package telecom.projectpiim;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.opencv_core;
+import org.bytedeco.javacpp.opencv_core.CvMat;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.MatVector;
 import org.bytedeco.javacpp.opencv_features2d.BOWImgDescriptorExtractor;
@@ -15,9 +16,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 
+import static org.bytedeco.javacpp.opencv_core.*;
 import static org.bytedeco.javacpp.opencv_highgui.imread;
-
-
 
 
 public class TestClassifier {
@@ -27,17 +27,17 @@ public class TestClassifier {
 
         //prepare BOW descriptor extractor from the vocabulary already computed
 
-        //final String pathToVocabulary = "vocabulary.yml" ; // to be define
+        final String pathToVocabulary = "vocabulary.yml" ; // to be define
         final Mat vocabulary;
 
         System.out.println("read vocabulary from file... ");
         Loader.load(opencv_core.class);
-        opencv_core.CvFileStorage storage = opencv_core.cvOpenFileStorage("app/assets/Data_BOW/vocabulary.yml", null, opencv_core.CV_STORAGE_READ);
-        Pointer p = opencv_core.cvReadByName(storage, null, "vocabulary", opencv_core.cvAttrList());
-        opencv_core.CvMat cvMat = new opencv_core.CvMat(p);
-        vocabulary = new opencv_core.Mat(cvMat);
+        CvFileStorage storage = cvOpenFileStorage("app/assets/Data_BOW/vocabulary.yml", null, CV_STORAGE_READ);
+        Pointer p = cvReadByName(storage, null, "vocabulary", cvAttrList());
+        CvMat cvMat = new CvMat(p);
+        vocabulary = new Mat(cvMat);
         System.out.println("vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
-        opencv_core.cvReleaseFileStorage(storage);
+        cvReleaseFileStorage(storage);
 
 
         //create SIFT feature point extracter
@@ -49,11 +49,11 @@ public class TestClassifier {
         final FlannBasedMatcher matcher;
         matcher = new FlannBasedMatcher();
 
-        //create BoF (or BoW) descriptor extractor
+       // create BoF (or BoW) descriptor extractor
         final BOWImgDescriptorExtractor bowide;
         bowide = new BOWImgDescriptorExtractor(detector.asDescriptorExtractor(), matcher);
 
-        //Set the dictionary with the vocabulary we created in the first step
+       // Set the dictionary with the vocabulary we created in the first step
         bowide.setVocabulary(vocabulary);
         System.out.println("Vocab is set");
 
@@ -105,7 +105,7 @@ public class TestClassifier {
 
             Mat imageTest = imread(im.getAbsolutePath(), 1);
             detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
-            bowide.compute(imageTest, keypoints, response_hist);
+            //wbowide.compute(imageTest, keypoints, response_hist);
 
             // Finding best match
             float minf = Float.MAX_VALUE;
@@ -113,7 +113,7 @@ public class TestClassifier {
 
             long timePrediction = System.currentTimeMillis();
             // loop for all classes
-            for (int i = 0; i < classNumber; i++) {
+            for (int i = 0; i < imageFiles.length; i++) {
                 // classifier prediction based on reconstructed histogram
                 float res = classifiers[i].predict(response_hist, true);
                 //System.out.println(class_names[i] + " is " + res);

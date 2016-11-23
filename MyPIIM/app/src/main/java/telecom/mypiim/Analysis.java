@@ -1,4 +1,4 @@
-package telecom.projectpiim;
+package telecom.mypiim;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,11 +15,7 @@ public class Analysis extends AppCompatActivity {
     ImageView imgResult;
     Button bWeb;
     String webSite = "http://www.google.com";
-    String uri;
-    ComparePics pic;
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +32,6 @@ public class Analysis extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         Bitmap bmp = (Bitmap) extras.getParcelable("Bitmap");
         //image.setImage(bmp);
-
         imgResult.setImageBitmap(bmp);
 
     }

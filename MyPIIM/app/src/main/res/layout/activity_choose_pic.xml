@@ -1,48 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/content_analysis"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_choose_pic"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="telecom.projectpiim.Analysis"
-    tools:showIn="@layout/activity_analysis">
+    tools:context="telecom.mypiim.ChoosePic">
 
-    <TextView
-        android:text="Result"
+    <Button
+        android:text="Camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_marginStart="109dp"
-        android:layout_marginTop="15dp"
-        android:id="@+id/tResult"
-        android:textAllCaps="false"
-        android:textSize="30sp" />
+        android:layout_marginStart="29dp"
+        android:layout_marginTop="13dp"
+        android:id="@+id/bCamera" />
 
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:srcCompat="@mipmap/ic_launcher"
-        android:layout_below="@+id/tResult"
-        android:layout_marginTop="148dp"
-        android:id="@+id/imgResult"
-        android:layout_alignParentEnd="true"
+        android:id="@+id/imageView"
+        android:layout_below="@+id/bCamera"
         android:layout_alignParentStart="true"
-        android:cropToPadding="false" />
+        android:layout_marginTop="37dp"
+        android:layout_alignParentEnd="true" />
 
     <Button
-        android:text="Go to Website"
+        android:text="Gallery"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/bWeb"
-        android:textSize="24sp"
+        android:id="@+id/bGallery"
+        android:layout_above="@+id/imageView"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="63dp" />
+
+    <Button
+        android:text="Analyze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="84dp" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="87dp"
+        android:id="@+id/bAnalyze" />
 </RelativeLayout>
