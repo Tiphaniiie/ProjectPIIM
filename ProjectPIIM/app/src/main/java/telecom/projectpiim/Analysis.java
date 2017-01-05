@@ -16,7 +16,6 @@ public class Analysis extends AppCompatActivity {
     Button bWeb;
     String webSite = "http://www.google.com";
     String uri;
-    ComparePics pic;
     ByteArrayOutputStream os = new ByteArrayOutputStream();
 
 

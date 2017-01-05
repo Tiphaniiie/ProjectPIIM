@@ -11,6 +11,7 @@ import java.io.IOException;
 import static org.bytedeco.javacpp.opencv_features2d.BFMatcher;
 import static org.bytedeco.javacpp.opencv_features2d.DMatchVectorVector;
 import static org.bytedeco.javacpp.opencv_features2d.KeyPoint;
+import static org.bytedeco.javacpp.opencv_highgui.IMREAD_COLOR;
 import static org.bytedeco.javacpp.opencv_highgui.imread;
 import static org.bytedeco.javacpp.opencv_nonfree.SIFT;
 
@@ -25,8 +26,14 @@ public class ComparePics {
 
     ComparePics(SpeMat image){
         this.image = image;
+        Mat newimg = null;
+        try {
+            newimg = load(image.getFile(), IMREAD_COLOR);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Mat[] images = new Mat[]{
-                this.image.getImage(),
+                newimg,
                 imread("app/assets/data/church02.jpg", 1)
         };
     }
@@ -77,7 +84,6 @@ public class ComparePics {
         DMatchVectorVector brandNewMatches = new DMatchVectorVector();
         brandNewMatches.resize(newMatches.size());
         for (int i = 0; i < newMatches.size(); i++) {
-            // TODO: Move this weights into params
             // Since minDist may be equal to 0.0, add some non-zero value
             if (newMatches.get(i, 0).distance() <= 3 * minDist) {
                 brandNewMatches.resize(sz, 1);
@@ -100,7 +106,7 @@ public class ComparePics {
 
 
     public void calcDist(){
-
+        Log.i("image is", String.valueOf(image.getUri()));
         KeyPoint[]  keypoints = {new KeyPoint(), new KeyPoint()};
         Mat[] descriptors = new Mat[2];
         int nFeatures = 0;
@@ -110,11 +116,8 @@ public class ComparePics {
         double sigma = 1.6;
         SIFT sift = new SIFT(nFeatures, nOctaveLayers, contrastThreshold, edgeThreshold, sigma);
 
-        // Detect SIFT features and compute descriptors for both images
         for (int i = 0; i <= 1; i++) {
-            // Create Surf Keypoint Detector
             sift.detect(images[i], keypoints[i]);
-            // Create Surf Extractor
             descriptors[i] = new Mat();
             sift.compute(images[i], keypoints[i], descriptors[i]);
         }
@@ -128,6 +131,8 @@ public class ComparePics {
 
         DMatchVectorVector bestMatches = refineMatches(matches);
         //Log.i("VECTOOOOOOOR", bestMatches.);
+
+
     }
 
 }

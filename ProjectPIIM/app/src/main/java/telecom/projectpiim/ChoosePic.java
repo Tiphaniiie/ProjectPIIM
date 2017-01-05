@@ -13,6 +13,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,7 +22,9 @@ import android.widget.ImageView;
 
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -34,6 +37,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private ImageView imageView;
     String mCurrentPhotoPath;
     SpeMat pic;
+    File test;
     Bitmap image;
     ComparePics comp;
 
@@ -135,7 +139,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 imageView.buildDrawingCache();
                 Bitmap bmp = imageView.getDrawingCache();
                 //bmp = scaleDownBitmap(bmp, 100, getBaseContext());
-                pic = new SpeMat(bmp, mCurrentPhotoPath);
+
+                pic = new SpeMat(bmp, mCurrentPhotoPath, savebitmap("test"));
                 bmp =pic.getPic();
                 comp = new ComparePics(pic);
                         comp.calcDist();
@@ -167,9 +172,34 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 e.printStackTrace();
             }
             imageView.setImageBitmap(bmp);
+
+
         }
     }
+    private File savebitmap(String filename) {
+        String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+        OutputStream outStream = null;
 
+        File file = new File(filename + ".png");
+        if (file.exists()) {
+            file.delete();
+            file = new File(extStorageDirectory, filename + ".png");
+            Log.e("file exist", "" + file + ",Bitmap= " + filename);
+        }
+        try {
+
+            Bitmap bitmap = BitmapFactory.decodeFile(file.getName());
+            outStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+            outStream.flush();
+            outStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.e("file", "" + file);
+        return file;
+
+    }
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
         ParcelFileDescriptor parcelFileDescriptor =
                 getContentResolver().openFileDescriptor(uri, "r");

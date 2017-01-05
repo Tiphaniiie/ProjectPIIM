@@ -4,7 +4,9 @@ import android.graphics.Bitmap;
 
 import org.bytedeco.javacpp.opencv_core.Mat;
 
-import static org.bytedeco.javacpp.opencv_core.CV_8UC1;
+import java.io.File;
+
+import static org.bytedeco.javacpp.opencv_highgui.imread;
 
 /**
  * Created by ASUS on 11/23/2016.
@@ -16,14 +18,30 @@ public class SpeMat {
     private String web;
     private double distance;
     private Mat image;
+    private File file;
 
-    public SpeMat(Bitmap pic, String uri) {
+    public SpeMat(Bitmap pic, String uri, File file) {
         this.pic = pic;
         this.uri =  uri.substring(uri.lastIndexOf('/') + 1);
+        this.file = file;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    public String getUri() {
+        return uri;
     }
 
     public Mat getImage() {
-        return image = new Mat(this.pic.getHeight(),this.pic.getWidth(), CV_8UC1);
+        //image = new Mat(this.pic.getHeight(),this.pic.getWidth(), CV_8UC1);
+        image = new Mat(imread(this.uri, 1));
+        return image;
     }
 
 
