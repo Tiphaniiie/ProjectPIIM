@@ -110,19 +110,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         KeyPoint keypoints2 = new KeyPoint();
         SiftDesc.detect(img, keypoints);
         SiftDesc.compute(img, keypoints, descriptor);
-        for (int i=0; i< fileTab.length; i++){
-            img2[i] = imread(fileTab[i].getAbsolutePath(), CV_LOAD_IMAGE_GRAYSCALE);
-            Log.i("avant second detect", String.valueOf(i));
-            SiftDesc.detect(img2[i], keypoints2);
-            Log.i("après second detect", String.valueOf(i));
-            SiftDesc.compute(img2[i], keypoints2, descriptor2);
-        }
         BFMatcher matcher = new BFMatcher( NORM_L2, false);
         DMatchVectorVector[] matches = new DMatchVectorVector[fileTab.length];
-        for(int i=0; i<fileTab.length; i++){
-            matches[i] = new DMatchVectorVector();
-            matcher.knnMatch(descriptor, descriptor2, matches[i], 2);
-        }
+        //for (int i=0; i< fileTab.length; i++){
+            img2[1] = imread(fileTab[1].getAbsolutePath(), CV_LOAD_IMAGE_GRAYSCALE);
+            Log.i("avant second detect", String.valueOf(1));
+            SiftDesc.detect(img2[1], keypoints2);
+            Log.i("après second detect", String.valueOf(1));
+            SiftDesc.compute(img2[1], keypoints2, descriptor2);
+            matches[1] = new DMatchVectorVector();
+            matcher.knnMatch(descriptor, descriptor2, matches[1], 2);
+        //}
         Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
     }
 }
