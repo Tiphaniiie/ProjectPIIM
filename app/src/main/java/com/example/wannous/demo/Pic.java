@@ -10,7 +10,6 @@ public class Pic {
 
     private float score;
     private File picture;
-    private float[] scoreTab;
 
     public File getPicture() {
         return picture;
@@ -29,11 +28,4 @@ public class Pic {
         this.score = score;
     }
 
-    public float[] getScoreTab() {
-        return scoreTab;
-    }
-
-    public void setScoreTab(float[] scoreTab) {
-        this.scoreTab = scoreTab;
-    }
 }

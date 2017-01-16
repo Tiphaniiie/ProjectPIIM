@@ -40,6 +40,7 @@ import static org.bytedeco.javacpp.opencv_nonfree.SIFT;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    //Todo: carefully renamme the package and all that it is associated with
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
@@ -58,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SIFT SiftDesc;
     private File[] fileTab;
     private String filePath;
+
+    //The pic class simplifies the way to select the best picture
     private Pic[] picTab;
     private Pic finalPic;
 
@@ -66,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
     }
 
-
+    //cf. OnCreate, pb with permissions with gallery
     @TargetApi(Build.VERSION_CODES.M)
     protected void askPermissions() {
         String[] permissions = {
@@ -76,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int requestCode = 200;
         requestPermissions(permissions, requestCode);
     }
-
+    //for the camera picture
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
         ParcelFileDescriptor parcelFileDescriptor =
                 getContentResolver().openFileDescriptor(uri, "r");
@@ -85,9 +88,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         parcelFileDescriptor.close();
         return image;
     }
-
+    //for the camera picture
     private File createImageFile() throws IOException {
-        // Create an image file name
+
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -97,10 +100,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 storageDir      /* directory */
         );
 
-        // Save a file: path for use with ACTION_VIEW intents
+
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
+    //Intent for the camera picture
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
@@ -122,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
+    //both for the camera and gallery pictures
     private void setPic() {
         // Get the dimensions of the View
         int targetW = imageView.getWidth();
@@ -145,6 +150,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         imageView.setImageBitmap(bitmap);
     }
+    //Determine the picture with the smallest distance from the reference
+    //could probably be optimized a bit better
     private static Pic bestPic(Pic[] picTab){
         Pic finalPic = new Pic();
         finalPic.setScore(picTab[0].getScore());
@@ -156,6 +163,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return finalPic;
     }
+
+    //Narrow matches to a few good ones
     private static float refineMatches(DMatchVectorVector oldMatches) {
         double RoD = 0.6;
         DMatchVectorVector newMatches = new DMatchVectorVector();
@@ -187,14 +196,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         brandNewMatches.resize(sz);
+
+        //Get the average of the few good matches
         float result = 0;
         for (int i = 0; i < brandNewMatches.size(); i++){
             result += brandNewMatches.get(i, 0).distance();
         }
-
         return result / brandNewMatches.size();
     }
-
+    //put the pictures from assets in the cache
     public static File ToCache(Context context, String Path, String fileName) {
         InputStream input;
         FileOutputStream output;
@@ -224,6 +234,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //permission problem with the gallery pictures
+        //The permission is to be verified with the following test
         if (shouldAskPermissions()) {
             askPermissions();
         }
@@ -270,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Uri selectedImage = data.getData();
             String[] filePathColumn = { MediaStore.Images.Media.DATA };
             Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-           cursor.moveToFirst();
+            cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             mCurrentPhotoPath = cursor.getString(columnIndex);
             cursor.close();
@@ -297,6 +310,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SiftDesc.compute(img, keypoints, descriptor);
         BFMatcher matcher = new BFMatcher( NORM_L2, false);
         DMatchVectorVector[] matches = new DMatchVectorVector[fileTab.length];
+        //There are two files in the cache (android icon and another),
+        //so the -2 removes them (they're always at the end)
         for (int i=0; i < fileTab.length-2; i++){
             picTab[i] = new Pic();
             picTab[i].setPicture(fileTab[i]);
@@ -311,6 +326,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         finalPic = bestPic(picTab);
         Log.i("final picture", finalPic.getPicture().getName());
+
+        //Passing only an URI is less costly
         Uri uri = Uri.fromFile(finalPic.getPicture());
         Intent analysisIntent = new Intent(MainActivity.this, ResultAnalysis.class);
         analysisIntent.setData(uri);

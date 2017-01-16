@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 public class ResultAnalysis extends AppCompatActivity {
+    //todo put the variable in a xml file and link them to Pic 
     String webSite = "http://www.google.com";
 
     @Override
