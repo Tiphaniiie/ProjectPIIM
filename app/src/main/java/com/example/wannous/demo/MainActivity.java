@@ -275,14 +275,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mCurrentPhotoPath = cursor.getString(columnIndex);
             cursor.close();
             setPic();
-//            Bitmap bmp = null;
-//            try {
-//                bmp = getBitmapFromUri(selectedImage);
-//            } catch (IOException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
-//            imageView.setImageBitmap(bmp);
 
         }
     }
@@ -309,7 +301,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             picTab[i] = new Pic();
             picTab[i].setPicture(fileTab[i]);
             img2[i] = imread(fileTab[i].getAbsolutePath(), CV_LOAD_IMAGE_GRAYSCALE);
-            Log.i("filetab.length", String.valueOf(fileTab.length));
             SiftDesc.detect(img2[i], keypoints2);
             Log.i("après second detect", fileTab[i].getName());
             SiftDesc.compute(img2[i], keypoints2, descriptor2);
@@ -319,8 +310,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.i("score", String.valueOf(picTab[i].getScore()));
         }
         finalPic = bestPic(picTab);
-        //Log.i("final picture", finalPic.getPicture().getName());
-        //Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
+        Log.i("final picture", finalPic.getPicture().getName());
         Uri uri = Uri.fromFile(finalPic.getPicture());
         Intent analysisIntent = new Intent(MainActivity.this, ResultAnalysis.class);
         analysisIntent.setData(uri);
