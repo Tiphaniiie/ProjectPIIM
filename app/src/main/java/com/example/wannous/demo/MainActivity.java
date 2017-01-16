@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static org.bytedeco.javacpp.opencv_core.Mat;
+import static org.bytedeco.javacpp.opencv_core.NORM_L2;
+import static org.bytedeco.javacpp.opencv_features2d.BFMatcher;
+import static org.bytedeco.javacpp.opencv_features2d.DMatchVectorVector;
 import static org.bytedeco.javacpp.opencv_features2d.KeyPoint;
 import static org.bytedeco.javacpp.opencv_highgui.CV_LOAD_IMAGE_GRAYSCALE;
 import static org.bytedeco.javacpp.opencv_highgui.imread;
@@ -113,6 +116,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             SiftDesc.detect(img2[i], keypoints2);
             Log.i("après second detect", String.valueOf(i));
             SiftDesc.compute(img2[i], keypoints2, descriptor2);
+        }
+        BFMatcher matcher = new BFMatcher( NORM_L2, false);
+        DMatchVectorVector[] matches = new DMatchVectorVector[fileTab.length];
+        for(int i=0; i<fileTab.length; i++){
+            matches[i] = new DMatchVectorVector();
+            matcher.knnMatch(descriptor, descriptor2, matches[i], 2);
         }
         Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
     }
