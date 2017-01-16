@@ -1,5 +1,6 @@
 package com.example.wannous.demo;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -18,7 +20,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -60,6 +61,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Pic[] picTab;
     private Pic finalPic;
 
+
+    protected boolean shouldAskPermissions() {
+        return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.M)
+    protected void askPermissions() {
+        String[] permissions = {
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE"
+        };
+        int requestCode = 200;
+        requestPermissions(permissions, requestCode);
+    }
 
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
         ParcelFileDescriptor parcelFileDescriptor =
@@ -208,6 +224,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (shouldAskPermissions()) {
+            askPermissions();
+        }
         imageView = (ImageView) findViewById(R.id.imageView);
         Button bCamera = (Button) findViewById(R.id.bCamera);
         bCamera.setOnClickListener(new View.OnClickListener(){
@@ -233,7 +252,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 fileTab = new File[filelist.length];
                 for (int i=0; i<filelist.length; i++) {
-                    //InputStream inputStream = assetManager.open("images"+"/"+filelist[i]);
                     fileTab[i] = this.ToCache(this, "images"+"/"+filelist[i], filelist[i]);
                 }
             }
@@ -241,12 +259,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
 
-        //String refFile = "Pepsi_10.jpg";
         Button bAnalyze = (Button) findViewById(R.id.bAnalyze);
         bAnalyze.setOnClickListener(this);
-
-        //Bitmap bitmap = BitmapFactory.decodeFile(filePath);
-        //imageView.setImageBitmap(bitmap);
     }
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
@@ -256,27 +270,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Uri selectedImage = data.getData();
             String[] filePathColumn = { MediaStore.Images.Media.DATA };
             Cursor cursor = getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-            cursor.moveToFirst();
+           cursor.moveToFirst();
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             mCurrentPhotoPath = cursor.getString(columnIndex);
             cursor.close();
-            Bitmap bmp = null;
-            try {
-                bmp = getBitmapFromUri(selectedImage);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            imageView.setImageBitmap(bmp);
+            setPic();
+//            Bitmap bmp = null;
+//            try {
+//                bmp = getBitmapFromUri(selectedImage);
+//            } catch (IOException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+//            imageView.setImageBitmap(bmp);
+
         }
     }
 
     @Override
     public void onClick(View view) {
-//        String refFile = mCurrentPhotoPath.substring(mCurrentPhotoPath.lastIndexOf('/') + 1);
-//        this.filePath = this.ToCache(this, "images" + "/" + refFile, refFile).getPath();
-//
+
         this.filePath = mCurrentPhotoPath;
+        Log.i("filepath", mCurrentPhotoPath);
         img = imread(filePath);
         img2 = new Mat[fileTab.length-2];
         picTab = new Pic[fileTab.length-2];
@@ -304,7 +319,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Log.i("score", String.valueOf(picTab[i].getScore()));
         }
         finalPic = bestPic(picTab);
-        Log.i("final picture", finalPic.getPicture().getName());
-        Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
+        //Log.i("final picture", finalPic.getPicture().getName());
+        //Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
+        Uri uri = Uri.fromFile(finalPic.getPicture());
+        Intent analysisIntent = new Intent(MainActivity.this, ResultAnalysis.class);
+        analysisIntent.setData(uri);
+        MainActivity.this.startActivity(analysisIntent);
     }
 }
