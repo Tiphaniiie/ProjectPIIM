@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 fileTab = new File[filelist.length];
                 for (int i=0; i<filelist.length; i++) {
-                    InputStream inputStream = assetManager.open("images"+"/"+filelist[i]);
+                    //InputStream inputStream = assetManager.open("images"+"/"+filelist[i]);
                     fileTab[i] = this.ToCache(this, "images"+"/"+filelist[i], filelist[i]);
                 }
             }
@@ -145,8 +145,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         Bitmap bitmap = BitmapFactory.decodeFile(filePath);
         imageView.setImageBitmap(bitmap);
-        Button keypointsButton = (Button) findViewById(R.id.Keypoints);
-        keypointsButton.setOnClickListener(this);
+        Button bAnalyze = (Button) findViewById(R.id.bAnalyze);
+        bAnalyze.setOnClickListener(this);
     }
 
 

@@ -15,16 +15,33 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/imageView"
-        android:layout_alignParentStart="true"
+        android:layout_alignParentStart="false"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_above="@+id/Keypoints" />
+        android:layout_above="@+id/bAnalyze"
+        android:layout_below="@+id/bCamera" />
 
     <Button
-        android:text="Keypoints"
+        android:text="Analyze"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/Keypoints"
+        android:id="@+id/bAnalyze"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
+    <Button
+        android:text="Camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="29dp"
+        android:layout_marginTop="13dp"
+        android:id="@+id/bCamera" />
+    <Button
+        android:text="Gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bGallery"
+        android:layout_above="@+id/imageView"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="63dp" />
 </RelativeLayout>
