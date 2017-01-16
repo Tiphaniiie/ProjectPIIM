@@ -43,20 +43,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private File[] fileTab;
     private String filePath;
     private Pic[] picTab;
+    private Pic finalPic;
 
-
-    private static Pic bestDistance(Pic[] scores){
-        DMatchVectorVector finalScore = scores[0].getScore();
-        Pic bestPic = new Pic();
-        for (int i = 0; i < scores.length; i++){
-            if (scores[i].getScore().get(i,0).distance() < finalScore.get(i,0).distance()){
-                bestPic = scores[i];
+    private static Pic bestPic(Pic[] picTab){
+        Pic finalPic = new Pic();
+        finalPic.setScore(picTab[0].getScore());
+        for (int i = 0; i < picTab.length; i++){
+            if (picTab[i].getScore() < finalPic.getScore()){
+                finalPic.setScore(picTab[i].getScore());
+                finalPic.setPicture(picTab[i].getPicture());
             }
         }
-        return bestPic;
+        return finalPic;
     }
-
-    private static DMatchVectorVector refineMatches(DMatchVectorVector oldMatches) {
+    private static float refineMatches(DMatchVectorVector oldMatches) {
         double RoD = 0.6;
         DMatchVectorVector newMatches = new DMatchVectorVector();
         int sz = 0;
@@ -87,7 +87,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         brandNewMatches.resize(sz);
-        return brandNewMatches;
+        float result = 0;
+        for (int i = 0; i < brandNewMatches.size(); i++){
+            result += brandNewMatches.get(i, 0).distance();
+        }
+
+        return result / brandNewMatches.size();
     }
 
     public static File ToCache(Context context, String Path, String fileName) {
@@ -149,8 +154,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
 
         img = imread(this.filePath);
-        img2 = new Mat[fileTab.length];
+        img2 = new Mat[fileTab.length-2];
         picTab = new Pic[fileTab.length-2];
+        finalPic = new Pic();
         SiftDesc = new SIFT(N_FEATURES, N_OCTAVE_LAYERS, CONTRAST_THRESHOLD, EDGE_THRESHOLD, SIGMA);
         Mat descriptor = new Mat();
         Mat descriptor2 = new Mat();
@@ -160,18 +166,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         SiftDesc.compute(img, keypoints, descriptor);
         BFMatcher matcher = new BFMatcher( NORM_L2, false);
         DMatchVectorVector[] matches = new DMatchVectorVector[fileTab.length];
-        for (int i=0; i < fileTab.length -2; i++){
+        for (int i=0; i < fileTab.length-2; i++){
             picTab[i] = new Pic();
-            img2[1] = imread(fileTab[1].getAbsolutePath(), CV_LOAD_IMAGE_GRAYSCALE);
+            picTab[i].setPicture(fileTab[i]);
+            img2[i] = imread(fileTab[i].getAbsolutePath(), CV_LOAD_IMAGE_GRAYSCALE);
             Log.i("filetab.length", String.valueOf(fileTab.length));
-            SiftDesc.detect(img2[1], keypoints2);
+            SiftDesc.detect(img2[i], keypoints2);
             Log.i("après second detect", fileTab[i].getName());
-            SiftDesc.compute(img2[1], keypoints2, descriptor2);
-            matches[1] = new DMatchVectorVector();
-            matcher.knnMatch(descriptor, descriptor2, matches[1], 2);
-            picTab[i].setScore(refineMatches(matches[1]));
-            Log.i("score", picTab[i].getScore().toString());
+            SiftDesc.compute(img2[i], keypoints2, descriptor2);
+            matches[i] = new DMatchVectorVector();
+            matcher.knnMatch(descriptor, descriptor2, matches[i], 2);
+            picTab[i].setScore(refineMatches(matches[i]));
+            Log.i("score", String.valueOf(picTab[i].getScore()));
         }
+        finalPic = bestPic(picTab);
+        Log.i("final picture", finalPic.getPicture().getName());
         Toast.makeText(this, "Nb of detected keypoints:" + keypoints.capacity(), Toast.LENGTH_LONG).show();
     }
 }
