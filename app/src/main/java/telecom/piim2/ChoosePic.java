@@ -260,14 +260,12 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         //Set the dictionary with the vocabulary we created in the first step
         bowide.setVocabulary(vocabulary);
         Log.i("HEEEEERE", "vocab is set");
-
-
         class_names = new String[classNumber];
         class_names[0] = "Coca";
         class_names[1] = "Pepsi";
         class_names[2] = "Sprite";
-
         classifiers = new CvSVM[classNumber];
+
         for (int i = 0; i < classNumber; i++) {
             Log.i("HEREAGAINNN", "Ok. Creating class name from " + class_names[i]);
             //open the file to write the resultant descriptor
@@ -275,10 +273,14 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             classifiers[i].load(classifierTab[i].getAbsolutePath());
         }
         Button bRequest = (Button) findViewById(R.id.bRequest);
-        bRequest.setOnClickListener(this);
-
+        bRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent requestIntent = new Intent(ChoosePic.this, Requests.class);
+                ChoosePic.this.startActivity(requestIntent);
+            }
+        });
     }
-
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
@@ -320,6 +322,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         }
         timePrediction = System.currentTimeMillis() - timePrediction;
         Log.i("ICIIIIII", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
-        //}
+
     }
 }
