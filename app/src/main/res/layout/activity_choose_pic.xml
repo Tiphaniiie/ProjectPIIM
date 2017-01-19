@@ -15,7 +15,7 @@
         android:id="@+id/imageView"
         android:layout_alignParentStart="false"
         android:layout_alignParentEnd="true"
-        android:layout_above="@+id/bAnalyze"
+        android:layout_above="@+id/bRequest"
         android:layout_below="@+id/bCamera" />
 
     <Button
@@ -44,5 +44,6 @@
         android:layout_marginStart="31dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
+
 
 </RelativeLayout>

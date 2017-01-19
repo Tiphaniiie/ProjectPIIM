@@ -211,28 +211,24 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             }
         });
 
-        Button bRequest = (Button) findViewById(R.id.bRequest);
-        bRequest.setOnClickListener(this);
-
         //get files into cache
         final AssetManager assetManager = getAssets();
-
         try {
             String[] filelist = assetManager.list("Data_BOW");
-            String[] filelistTest = assetManager.list("Data_BOW"+"/"+ "TestImage");
-            String[] filelistClassifier = assetManager.list("Data_BOW"+"/"+"classifiers");
+            String[] filelistTest = assetManager.list("Data_BOW" + "/" + "TestImage");
+            String[] filelistClassifier = assetManager.list("Data_BOW" + "/" + "classifiers");
 
             if ((filelist == null) || (filelistTest == null) || (filelistClassifier == null)) {
             } else {
-                vocab = this.ToCache(this, "Data_BOW"+"/"+"vocabulary.yml", "vocabulaire");
+                vocab = this.ToCache(this, "Data_BOW" + "/" + "vocabulary.yml", "vocabulaire");
                 fileTab = new File[filelistTest.length];
                 for (int i = 0; i < filelistTest.length; i++) {
-                    fileTab[i] = this.ToCache(this, "Data_BOW"+"/"+ "TestImage" +"/"+ filelistTest[i], filelistTest[i]);
+                    fileTab[i] = this.ToCache(this, "Data_BOW" + "/" + "TestImage" + "/" + filelistTest[i], filelistTest[i]);
                     Log.i("ICIIIIII", fileTab[i].getAbsolutePath());
                 }
                 classifierTab = new File[filelistClassifier.length];
-                for (int i = 0; i<filelistClassifier.length; i++){
-                    classifierTab[i] = this.ToCache(this, "Data_BOW"+"/"+ "classifiers" +"/"+ filelistClassifier[i], filelistClassifier[i]);
+                for (int i = 0; i < filelistClassifier.length; i++) {
+                    classifierTab[i] = this.ToCache(this, "Data_BOW" + "/" + "classifiers" + "/" + filelistClassifier[i], filelistClassifier[i]);
                     Log.i("ICIIIIII", classifierTab[i].getAbsolutePath());
                 }
             }
@@ -278,6 +274,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             classifiers[i] = new CvSVM();
             classifiers[i].load(classifierTab[i].getAbsolutePath());
         }
+        Button bRequest = (Button) findViewById(R.id.bRequest);
+        bRequest.setOnClickListener(this);
 
     }
 
@@ -295,34 +293,33 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             mCurrentPhotoPath = cursor.getString(columnIndex);
             cursor.close();
             setPic();
-
         }
     }
 
     @Override
     public void onClick(View view) {
-        imagesVec = new MatVector(fileTab.length);
-        for (int i=0; i < fileTab.length-2; i++){
-            Log.i("HEEEEEEEEEEEEEERE", "path:" + fileTab[i].getName());
-            Mat imageTest = imread(fileTab[i].getAbsolutePath(), 1);
-            detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
-            bowide.compute(imageTest, keypoints, response_hist);
-            // Finding best match
-            float minf = Float.MAX_VALUE;
-            String bestMatch = null;
-            long timePrediction = System.currentTimeMillis();
-            // loop for all classes
-            for (int j = 0; j < classNumber; j++) {
-                // classifier prediction based on reconstructed histogram
-                float res = classifiers[j].predict(response_hist, true);
-                //System.out.println(class_names[i] + " is " + res);
-                if (res < minf) {
-                    minf = res;
-                    bestMatch = class_names[j];
-                }
+        //imagesVec = new MatVector(fileTab.length);
+        //for (int i=0; i < fileTab.length-2; i++){
+        Log.i("HEEEEEEEEEEEEEERE", "ok");
+        Mat imageTest = imread(mCurrentPhotoPath, 1);
+        detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
+        bowide.compute(imageTest, keypoints, response_hist);
+        // Finding best match
+        float minf = Float.MAX_VALUE;
+        String bestMatch = null;
+        long timePrediction = System.currentTimeMillis();
+        // loop for all classes
+        for (int j = 0; j < classNumber; j++) {
+            // classifier prediction based on reconstructed histogram
+            float res = classifiers[j].predict(response_hist, true);
+            //System.out.println(class_names[i] + " is " + res);
+            if (res < minf) {
+                minf = res;
+                bestMatch = class_names[j];
             }
-            timePrediction = System.currentTimeMillis() - timePrediction;
-            Log.i("ICIIIIII", fileTab[i].getName() + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
         }
+        timePrediction = System.currentTimeMillis() - timePrediction;
+        Log.i("ICIIIIII", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
+        //}
     }
 }
