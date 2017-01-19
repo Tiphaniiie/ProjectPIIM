@@ -47,6 +47,7 @@ import static org.bytedeco.javacpp.opencv_core.cvOpenFileStorage;
 import static org.bytedeco.javacpp.opencv_core.cvReadByName;
 import static org.bytedeco.javacpp.opencv_core.cvReleaseFileStorage;
 import static org.bytedeco.javacpp.opencv_features2d.KeyPoint;
+import static org.bytedeco.javacpp.opencv_highgui.imread;
 
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
 
@@ -273,7 +274,29 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             classifiers[i].load(classifierTab[i].getAbsolutePath());
         }
 
-
+        imagesVec = new MatVector(fileTab.length);
+        for (int i=0; i < fileTab.length-2; i++){
+            Log.i("HEEEEEEEEEEEEEERE", "path:" + fileTab[i].getName());
+            Mat imageTest = imread(fileTab[i].getAbsolutePath(), 1);
+            detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
+            bowide.compute(imageTest, keypoints, response_hist);
+            // Finding best match
+            float minf = Float.MAX_VALUE;
+            String bestMatch = null;
+            long timePrediction = System.currentTimeMillis();
+            // loop for all classes
+            for (int j = 0; j < classNumber; j++) {
+                // classifier prediction based on reconstructed histogram
+                float res = classifiers[j].predict(response_hist, true);
+                //System.out.println(class_names[i] + " is " + res);
+                if (res < minf) {
+                    minf = res;
+                    bestMatch = class_names[j];
+                }
+            }
+            timePrediction = System.currentTimeMillis() - timePrediction;
+            Log.i("ICIIIIII", fileTab[i].getName() + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
+        }
     }
 
 
