@@ -59,6 +59,12 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private File[] fileTab;
     private File[] classifierTab;
 
+    SIFT detector;
+    FlannBasedMatcher matcher;
+    BOWImgDescriptorExtractor bowide;
+    String[] class_names;
+    CvSVM[] classifiers;
+    int classNumber = 3;
     Mat response_hist = new Mat();
     KeyPoint keypoints = new KeyPoint();
     Mat inputDescriptors = new Mat();
@@ -245,27 +251,26 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         Log.i("HERE", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
         cvReleaseFileStorage(storage);
         //create SIFT feature point extracter
-        final SIFT detector;
+
         // default parameters ""opencv2/features2d/features2d.hpp""
         detector = new SIFT(0, 3, 0.04, 10, 1.6);
         //create a matcher with FlannBased Euclidien distance (possible also with BruteForce-Hamming)
-        final FlannBasedMatcher matcher;
+
         matcher = new FlannBasedMatcher();
 
         //create BoF (or BoW) descriptor extractor
-        final BOWImgDescriptorExtractor bowide;
+
         bowide = new BOWImgDescriptorExtractor(detector.asDescriptorExtractor(), matcher);
         //Set the dictionary with the vocabulary we created in the first step
         bowide.setVocabulary(vocabulary);
         Log.i("HEEEEERE", "vocab is set");
-        int classNumber = 3;
-        String[] class_names;
-        class_names = new String[classNumber];
 
+
+        class_names = new String[classNumber];
         class_names[0] = "Coca";
         class_names[1] = "Pepsi";
         class_names[2] = "Sprite";
-        final CvSVM[] classifiers;
+
         classifiers = new CvSVM[classNumber];
         for (int i = 0; i < classNumber; i++) {
             Log.i("HEREAGAINNN", "Ok. Creating class name from " + class_names[i]);
@@ -274,6 +279,28 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             classifiers[i].load(classifierTab[i].getAbsolutePath());
         }
 
+    }
+
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            setPic();
+        }
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            mCurrentPhotoPath = cursor.getString(columnIndex);
+            cursor.close();
+            setPic();
+
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
         imagesVec = new MatVector(fileTab.length);
         for (int i=0; i < fileTab.length-2; i++){
             Log.i("HEEEEEEEEEEEEEERE", "path:" + fileTab[i].getName());
@@ -297,28 +324,5 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             timePrediction = System.currentTimeMillis() - timePrediction;
             Log.i("ICIIIIII", fileTab[i].getName() + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
         }
-    }
-
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            setPic();
-        }
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
-            Uri selectedImage = data.getData();
-            String[] filePathColumn = {MediaStore.Images.Media.DATA};
-            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            mCurrentPhotoPath = cursor.getString(columnIndex);
-            cursor.close();
-            setPic();
-
-        }
-    }
-
-    @Override
-    public void onClick(View view) {
-
     }
 }
