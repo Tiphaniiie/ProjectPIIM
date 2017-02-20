@@ -2,6 +2,7 @@ package telecom.piim2;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -17,8 +18,16 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.R.attr.maxHeight;
 import static android.R.attr.maxWidth;
@@ -27,12 +36,46 @@ import static com.android.volley.Response.ErrorListener;
 import static com.android.volley.Response.Listener;
 
 public class Requests extends AppCompatActivity implements View.OnClickListener {
-    TextView textView;
+    static TextView textView;
     ImageView imageView2;
+    String index = "index.json";
     String url = "http://www-rech.telecom-lille.fr/nonfreesift/index.json";
     String url3 = "http://www-rech.telecom-lille.fr/nonfreesift/train-images/Coca_12.jpg";
     String url2 = "http://www-rech.telecom-lille.fr/nonfreesift/vocabulary.yml";
+    String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
+    String filepath = Environment.DIRECTORY_DCIM+"/PIIMfiles/";
+    List<Brand> brandsList = new ArrayList<>();
 
+    public static File writeToFile(String data, String fileName)
+    {
+        // Get the directory for the user's public pictures directory.
+        final File path = Environment.getExternalStorageDirectory();
+        //final File path = filepath;
+        // Make sure the path directory exists.
+        if(!path.exists())
+        {
+            // Make it, if it doesn't exit
+            path.mkdirs();
+        }
+        final File file = new File(path, fileName);
+        // Save your stream, don't forget to flush() it before closing it.
+
+        try
+        {
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            myOutWriter.append(data);
+            myOutWriter.close();
+            fOut.flush();
+            fOut.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        textView.setText(file.getAbsolutePath());
+        return file;
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +92,7 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
-        RequestQueue queue = Volley.newRequestQueue(this);
+       final RequestQueue queue = Volley.newRequestQueue(this);
         switch (v.getId()) {
 
             case R.id.bString:
@@ -71,14 +114,40 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
                 break;
 
             case R.id.bJson:
-                JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest+index, null,
                         new Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject json) {
                                 //traitement du fichier json
                                 try {
-                                    String array = json.getJSONArray("brands").toString();
-                                    textView.setText(array);
+                                    String vocab = json.getString("vocabulary");
+                                    StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest+vocab, new Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            //	Display	the	first	500	characters	of	the	response	string.
+                                            writeToFile(response, "vocabulary.yml");
+
+                                        }
+                                    },
+                                            new ErrorListener() {
+                                                @Override
+                                                public void onErrorResponse(VolleyError error) {
+                                                    textView.setText("That	didn't	work!");
+                                                }
+                                            });
+                                    queue.add(stringRequest);
+                                    JSONArray brands = json.getJSONArray("brands");
+                                    for (int i = 0; i<brands.length(); i++){
+                                        JSONObject x = brands.getJSONObject(i);
+                                        brandsList.add(new Brand(x.getString("brandname"), x.getString("url"),x.getString("classifier")));
+                                        JSONArray imgs = x.getJSONArray("images");
+                                        for (int j = 0; j<imgs.length(); j++){
+                                            String y = imgs.getString(j);
+                                            brandsList.get(i).setImgNames(y);
+                                            Log.i("listes : ", i+" "+brandsList.get(i).getImgNames().get(j).toString());
+                                        }
+                                        brandsList.get(i).setClassifier(queue, urlRequest);
+                                    }
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -94,7 +163,7 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
                 break;
 
             case R.id.bPic:
-                ImageRequest imageRequest = new ImageRequest(url3, new Listener<Bitmap>() {
+                ImageRequest imageRequest = new ImageRequest(urlRequest+"trainImages/"+brandsList.get(0).getImgNames().get(0), new Listener<Bitmap>() {
                     @Override
                     public void onResponse(Bitmap bitmap) {
                         Log.i("TEEEEEST",bitmap.toString());
