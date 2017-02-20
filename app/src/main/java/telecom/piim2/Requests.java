@@ -73,7 +73,7 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        textView.setText(file.getAbsolutePath());
+        //textView.setText(file.getAbsolutePath());
         return file;
     }
     @Override
@@ -163,7 +163,7 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
                 break;
 
             case R.id.bPic:
-                ImageRequest imageRequest = new ImageRequest(urlRequest+"trainImages/"+brandsList.get(0).getImgNames().get(0), new Listener<Bitmap>() {
+                ImageRequest imageRequest = new ImageRequest(urlRequest+"train-images/"+brandsList.get(0).getImgNames().get(0), new Listener<Bitmap>() {
                     @Override
                     public void onResponse(Bitmap bitmap) {
                         Log.i("TEEEEEST",bitmap.toString());

@@ -1,17 +1,23 @@
 package telecom.piim2;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.R.attr.maxHeight;
+import static android.R.attr.maxWidth;
+import static android.graphics.Bitmap.Config.RGB_565;
 
 /**
  * Created by ASUS on 1/19/2017.
@@ -25,6 +31,7 @@ public class Brand {
     private File classifier;
     private Bitmap image;
     private ArrayList<String> imgNames;
+    private Uri uri;
 
     public Brand(String name, String url, String fileName) {
         this.url = url;
@@ -71,13 +78,28 @@ public class Brand {
                     }
                 });
         queue.add(stringRequest2);
+
     }
 
     public Bitmap getImage() {
         return image;
     }
 
-    public void setImage(Bitmap image) {
+
+    public void setImage(RequestQueue queue, String urlRequest) {
+        ImageRequest imageRequest = new ImageRequest(urlRequest+"train-images/"+this.getImgNames().get(0), new Response.Listener<Bitmap>() {
+            @Override
+            public void onResponse(Bitmap bitmap) {
+                Log.i("TEEEEEST",bitmap.toString());
+                image = bitmap;
+            }
+        },
+                maxWidth, maxHeight, null, RGB_565, new Response.ErrorListener() {
+            public void onErrorResponse(VolleyError error) {
+                Log.i("HERE", "load	error");
+            }
+        });
+        queue.add(imageRequest);
         this.image = image;
     }
 
@@ -95,5 +117,13 @@ public class Brand {
 
     public void setImgNames(String imgName) {
         this.imgNames.add(imgName);
+    }
+
+    public Uri getUri() {
+        return uri;
+    }
+
+    public void setUri(Uri uri) {
+        this.uri = uri;
     }
 }

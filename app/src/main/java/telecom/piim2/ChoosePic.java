@@ -14,12 +14,21 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Images;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
@@ -28,20 +37,24 @@ import org.bytedeco.javacpp.opencv_features2d.BOWImgDescriptorExtractor;
 import org.bytedeco.javacpp.opencv_features2d.FlannBasedMatcher;
 import org.bytedeco.javacpp.opencv_ml.CvSVM;
 import org.bytedeco.javacpp.opencv_nonfree.SIFT;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.bytedeco.javacpp.opencv_core.CV_STORAGE_READ;
-import static org.bytedeco.javacpp.opencv_core.CvFileStorage;
-import static org.bytedeco.javacpp.opencv_core.CvMat;
 import static org.bytedeco.javacpp.opencv_core.Mat;
-import static org.bytedeco.javacpp.opencv_core.MatVector;
 import static org.bytedeco.javacpp.opencv_core.cvAttrList;
 import static org.bytedeco.javacpp.opencv_core.cvOpenFileStorage;
 import static org.bytedeco.javacpp.opencv_core.cvReadByName;
@@ -56,19 +69,19 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private ImageView imageView;
     String mCurrentPhotoPath;
     File vocab;
-    private File[] fileTab;
-    private File[] classifierTab;
 
     SIFT detector;
     FlannBasedMatcher matcher;
     BOWImgDescriptorExtractor bowide;
     String[] class_names;
     CvSVM[] classifiers;
-    int classNumber = 3;
     Mat response_hist = new Mat();
     KeyPoint keypoints = new KeyPoint();
     Mat inputDescriptors = new Mat();
-    MatVector imagesVec;
+
+    String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
+    List<Brand> brandsList = new ArrayList<>();
+    RequestQueue queue;
 
     protected boolean shouldAskPermissions() {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
@@ -185,6 +198,42 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         }
     }
 
+    public static File writeToFile(String data, String fileName)
+    {
+        // Get the directory for the user's public pictures directory.
+        final File path = Environment.getExternalStorageDirectory();
+        //final File path = filepath;
+        // Make sure the path directory exists.
+        if(!path.exists())
+        {
+            // Make it, if it doesn't exit
+            path.mkdirs();
+        }
+        final File file = new File(path, fileName);
+        // Save your stream, don't forget to flush() it before closing it.
+
+        try
+        {
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            myOutWriter.append(data);
+            myOutWriter.close();
+            fOut.flush();
+            fOut.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
+    }
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        return Uri.parse(path);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -206,43 +255,87 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         bGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                Intent galleryIntent = new Intent(Intent.ACTION_PICK, Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
             }
         });
+        queue = Volley.newRequestQueue(this);
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest+"index.json", null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject json) {
+                        //traitement du fichier json
+                        try {
+                            String vocabs = json.getString("vocabulary");
+                            StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest+vocabs, new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    //	Display	the	first	500	characters	of	the	response	string.
+                                    vocab = writeToFile(response, "vocabulary.yml");
 
-        //get files into cache
-        final AssetManager assetManager = getAssets();
-        try {
-            String[] filelist = assetManager.list("Data_BOW");
-            String[] filelistTest = assetManager.list("Data_BOW" + "/" + "TestImage");
-            String[] filelistClassifier = assetManager.list("Data_BOW" + "/" + "classifiers");
+                                }
+                            },
+                                    new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                        }
+                                    });
+                            queue.add(stringRequest);
+                            JSONArray brands = json.getJSONArray("brands");
+                            for (int i = 0; i<brands.length(); i++){
+                                JSONObject x = brands.getJSONObject(i);
+                                brandsList.add(new Brand(x.getString("brandname"), x.getString("url"),x.getString("classifier")));
+                                JSONArray imgs = x.getJSONArray("images");
+                                for (int j = 0; j<imgs.length(); j++){
+                                    String y = imgs.getString(j);
+                                    brandsList.get(i).setImgNames(y);
+                                }
+                                brandsList.get(i).setClassifier(queue, urlRequest);
+                                brandsList.get(i).setImage(queue, urlRequest);
+                            }
 
-            if ((filelist == null) || (filelistTest == null) || (filelistClassifier == null)) {
-            } else {
-                vocab = this.ToCache(this, "Data_BOW" + "/" + "vocabulary.yml", "vocabulaire");
-                fileTab = new File[filelistTest.length];
-                for (int i = 0; i < filelistTest.length; i++) {
-                    fileTab[i] = this.ToCache(this, "Data_BOW" + "/" + "TestImage" + "/" + filelistTest[i], filelistTest[i]);
-                    Log.i("ICIIIIII", fileTab[i].getAbsolutePath());
-                }
-                classifierTab = new File[filelistClassifier.length];
-                for (int i = 0; i < filelistClassifier.length; i++) {
-                    classifierTab[i] = this.ToCache(this, "Data_BOW" + "/" + "classifiers" + "/" + filelistClassifier[i], filelistClassifier[i]);
-                    Log.i("ICIIIIII", classifierTab[i].getAbsolutePath());
-                }
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                    }
+                });
+        queue.add(jsonRequest);
 
         //getClassifier part
+
+        Button bRequest = (Button) findViewById(R.id.bRequest);
+        bRequest.setOnClickListener(this);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            setPic();
+        }
+        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+            Uri selectedImage = data.getData();
+            String[] filePathColumn = {Images.Media.DATA};
+            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            mCurrentPhotoPath = cursor.getString(columnIndex);
+            cursor.close();
+            setPic();
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+
         final Mat vocabulary;
         Loader.load(opencv_core.class);
-        CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
+        opencv_core.CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
         Pointer p = cvReadByName(storage, null, "vocabulary", cvAttrList());
-        CvMat cvMat = new CvMat(p);
+        opencv_core.CvMat cvMat = new opencv_core.CvMat(p);
         vocabulary = new Mat(cvMat);
         Log.i("HERE", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
         cvReleaseFileStorage(storage);
@@ -260,48 +353,18 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         //Set the dictionary with the vocabulary we created in the first step
         bowide.setVocabulary(vocabulary);
         Log.i("HEEEEERE", "vocab is set");
-        class_names = new String[classNumber];
-        class_names[0] = "Coca";
-        class_names[1] = "Pepsi";
-        class_names[2] = "Sprite";
-        classifiers = new CvSVM[classNumber];
+        class_names = new String[brandsList.size()];
+        for (int i = 0; i< brandsList.size(); i++){
+            class_names[i] = brandsList.get(i).getName();
+        }
+        classifiers = new CvSVM[brandsList.size()];
 
-        for (int i = 0; i < classNumber; i++) {
+        for (int i = 0; i < brandsList.size(); i++) {
             Log.i("HEREAGAINNN", "Ok. Creating class name from " + class_names[i]);
             //open the file to write the resultant descriptor
             classifiers[i] = new CvSVM();
-            classifiers[i].load(classifierTab[i].getAbsolutePath());
+            classifiers[i].load(brandsList.get(i).getClassifier().getAbsolutePath());
         }
-        Button bRequest = (Button) findViewById(R.id.bRequest);
-        bRequest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent requestIntent = new Intent(ChoosePic.this, Requests.class);
-                ChoosePic.this.startActivity(requestIntent);
-            }
-        });
-    }
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
-            setPic();
-        }
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
-            Uri selectedImage = data.getData();
-            String[] filePathColumn = {MediaStore.Images.Media.DATA};
-            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            mCurrentPhotoPath = cursor.getString(columnIndex);
-            cursor.close();
-            setPic();
-        }
-    }
-
-    @Override
-    public void onClick(View view) {
-        //imagesVec = new MatVector(fileTab.length);
-        //for (int i=0; i < fileTab.length-2; i++){
         Log.i("HEEEEEEEEEEEEEERE", "ok");
         Mat imageTest = imread(mCurrentPhotoPath, 1);
         detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
@@ -311,7 +374,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         String bestMatch = null;
         long timePrediction = System.currentTimeMillis();
         // loop for all classes
-        for (int j = 0; j < classNumber; j++) {
+        for (int j = 0; j < brandsList.size(); j++) {
             // classifier prediction based on reconstructed histogram
             float res = classifiers[j].predict(response_hist, true);
             //System.out.println(class_names[i] + " is " + res);
@@ -322,6 +385,17 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         }
         timePrediction = System.currentTimeMillis() - timePrediction;
         Log.i("ICIIIIII", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
-
+        for (int i =0; i<brandsList.size(); i++){
+            if (brandsList.get(i).getName() == bestMatch){
+                Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
+                Brand finalBrand = brandsList.get(i);
+                brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
+                Bundle extras = new Bundle();
+                extras.putString("URL", brandsList.get(i).getUrl());
+                extras.putParcelable("URI", brandsList.get(i).getUri());
+                analysisIntent.putExtras(extras);
+                ChoosePic.this.startActivity(analysisIntent);
+            }
+        }
     }
 }

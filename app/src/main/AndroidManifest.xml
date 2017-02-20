@@ -35,6 +35,7 @@
         </provider>
 
         <activity android:name=".Requests"></activity>
+        <activity android:name=".ResultAnalysis"></activity>
     </application>
 
 </manifest>
