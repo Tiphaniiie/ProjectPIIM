@@ -9,6 +9,7 @@ import org.bytedeco.javacpp.opencv_core;
 import java.io.File;
 import java.util.ArrayList;
 
+import static org.bytedeco.javacpp.opencv_core.*;
 import static org.bytedeco.javacpp.opencv_core.CV_STORAGE_READ;
 import static org.bytedeco.javacpp.opencv_core.Mat;
 import static org.bytedeco.javacpp.opencv_core.cvAttrList;
@@ -41,15 +42,14 @@ public class PicAnalysis {
         this.brandsList = brandsList;
     }
 
-    public Mat getVoc(){
+    public void getVoc(){
         Loader.load(opencv_core.class);
-        opencv_core.CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
+        CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
         Pointer p = cvReadByName(storage, null, "vocabulary", cvAttrList());
-        opencv_core.CvMat cvMat = new opencv_core.CvMat(p);
-        vocabulary = new Mat(cvMat);
+        CvMat cvMat = new CvMat(p);
+        this.vocabulary = new Mat(cvMat);
         Log.d("Vocabulary", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
         cvReleaseFileStorage(storage);
-        return vocabulary;
     }
 
     public void getClfier(){
@@ -68,7 +68,7 @@ public class PicAnalysis {
         }
     }
 
-    public String analyse(){
+    public String analysePic(){
         SIFT detector;
         FlannBasedMatcher matcher;
         BOWImgDescriptorExtractor bowide;
@@ -87,7 +87,7 @@ public class PicAnalysis {
         bowide = new BOWImgDescriptorExtractor(detector.asDescriptorExtractor(), matcher);
 
         //Set the dictionary with the vocabulary
-        vocabulary = getVoc();
+        getVoc();
         bowide.setVocabulary(vocabulary);
         Log.d("Vocabulary", "vocab is set");
 

@@ -15,7 +15,6 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -28,13 +27,6 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.opencv_features2d.BOWImgDescriptorExtractor;
-import org.bytedeco.javacpp.opencv_features2d.FlannBasedMatcher;
-import org.bytedeco.javacpp.opencv_ml.CvSVM;
-import org.bytedeco.javacpp.opencv_nonfree.SIFT;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,31 +41,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.bytedeco.javacpp.opencv_core.CV_STORAGE_READ;
-import static org.bytedeco.javacpp.opencv_core.Mat;
-import static org.bytedeco.javacpp.opencv_core.cvAttrList;
-import static org.bytedeco.javacpp.opencv_core.cvOpenFileStorage;
-import static org.bytedeco.javacpp.opencv_core.cvReadByName;
-import static org.bytedeco.javacpp.opencv_core.cvReleaseFileStorage;
-import static org.bytedeco.javacpp.opencv_features2d.KeyPoint;
-import static org.bytedeco.javacpp.opencv_highgui.imread;
-
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
     //Var used in the selection of the picture to be analysed
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     String mCurrentPhotoPath;
-
-    //Var used in the analysis of the picture
-    SIFT detector;
-    FlannBasedMatcher matcher;
-    BOWImgDescriptorExtractor bowide;
-    String[] class_names;
-    CvSVM[] classifiers;
-    Mat response_hist = new Mat();
-    KeyPoint keypoints = new KeyPoint();
-    Mat inputDescriptors = new Mat();
 
     //Var used in the server calls to get the files
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
@@ -159,23 +132,21 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         imageView.setImageBitmap(bitmap);
     }
+
     //Save xml and yml files from server
     //Todo find a directory that will clean itself when app is restarted
-    public static File writeToFile(String data, String fileName)
-    {
+    public static File writeToFile(String data, String fileName) {
         //Get the directory for the user's public pictures directory.
         final File path = Environment.getExternalStorageDirectory();
         //Make sure the path directory exists.
-        if(!path.exists())
-        {
+        if (!path.exists()) {
             //Make it, if it doesn't exit
             path.mkdirs();
         }
         final File file = new File(path, fileName);
 
         //Save stream
-        try
-        {
+        try {
             file.createNewFile();
             FileOutputStream fOut = new FileOutputStream(file);
             OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
@@ -190,6 +161,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
         return file;
     }
+
     //Get the uri from a bitmap
     public Uri getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -197,6 +169,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         String path = Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
         return Uri.parse(path);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -226,7 +199,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         queue = Volley.newRequestQueue(this);
 
         //Call to get the index
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest+"index.json", null,
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest + "index.json", null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject json) {
@@ -235,7 +208,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                             //Get the vocabulary file name from the json
                             String vocabs = json.getString("vocabulary");
                             //Get the vocabulary file from server
-                            StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest+vocabs, new Response.Listener<String>() {
+                            StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest + vocabs, new Response.Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
                                     //Save file
@@ -252,13 +225,13 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                             //Parse the brands part of the json file
                             JSONArray brands = json.getJSONArray("brands");
                             //Create as many instances of brands as needed
-                            for (int i = 0; i<brands.length(); i++){
+                            for (int i = 0; i < brands.length(); i++) {
                                 //Get all objects per brand
                                 JSONObject x = brands.getJSONObject(i);
                                 //Construct the Brand objects
-                                brandsList.add(new Brand(x.getString("brandname"), x.getString("url"),x.getString("classifier")));
+                                brandsList.add(new Brand(x.getString("brandname"), x.getString("url"), x.getString("classifier")));
                                 JSONArray imgs = x.getJSONArray("images");
-                                for (int j = 0; j<imgs.length(); j++){
+                                for (int j = 0; j < imgs.length(); j++) {
                                     String y = imgs.getString(j);
                                     brandsList.get(i).setImgNames(y);
                                 }
@@ -304,74 +277,14 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
     @Override
     public void onClick(View view) {
-        //Start the analysis of the picture
-        //Create the vocabulary
-        final Mat vocabulary;
-        Loader.load(opencv_core.class);
-        opencv_core.CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
-        Pointer p = cvReadByName(storage, null, "vocabulary", cvAttrList());
-        opencv_core.CvMat cvMat = new opencv_core.CvMat(p);
-        vocabulary = new Mat(cvMat);
-        Log.d("Vocabulary", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
-        cvReleaseFileStorage(storage);
+        //Analyse the picture and find the brand that is the best match
+        PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
+        String bestMatch;
+        bestMatch = analyse.analysePic();
 
-        //create SIFT feature point extracter
-        // default parameters ""opencv2/features2d/features2d.hpp""
-        detector = new SIFT(0, 3, 0.04, 10, 1.6);
-
-        //create a matcher with FlannBased Euclidien distance (possible also with BruteForce-Hamming)
-        matcher = new FlannBasedMatcher();
-
-        //create BoF (or BoW) descriptor extractor
-        bowide = new BOWImgDescriptorExtractor(detector.asDescriptorExtractor(), matcher);
-
-        //Set the dictionary with the vocabulary
-        bowide.setVocabulary(vocabulary);
-        Log.d("Vocabulary", "vocab is set");
-
-        //Create classifiers from server files
-        class_names = new String[brandsList.size()];
-        for (int i = 0; i< brandsList.size(); i++){
-            class_names[i] = brandsList.get(i).getName();
-        }
-        classifiers = new CvSVM[brandsList.size()];
-
+        //Retrieve brand that's the best match
         for (int i = 0; i < brandsList.size(); i++) {
-            Log.d("Classifier", "Ok. Creating class name from " + class_names[i]);
-            //open the file to write the resultant descriptor
-            classifiers[i] = new CvSVM();
-            classifiers[i].load(brandsList.get(i).getClassifier().getAbsolutePath());
-        }
-        Log.d("Classifier", "ok");
-
-        //Transform chosen picture to Mat
-        Mat imageTest = imread(mCurrentPhotoPath, 1);
-
-        //Analyse it
-        detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
-        bowide.compute(imageTest, keypoints, response_hist);
-
-        // Finding best match
-        float minf = Float.MAX_VALUE;
-        String bestMatch = null;
-        long timePrediction = System.currentTimeMillis();
-
-        // loop for all classes
-        for (int j = 0; j < brandsList.size(); j++) {
-            // classifier prediction based on reconstructed histogram
-            float res = classifiers[j].predict(response_hist, true);
-            if (res < minf) {
-                minf = res;
-                bestMatch = class_names[j];
-            }
-        }
-
-        timePrediction = System.currentTimeMillis() - timePrediction;
-
-        Log.d("Analysis", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
-        for (int i =0; i<brandsList.size(); i++){
-            //Get the right Brand
-            if (brandsList.get(i).getName() == bestMatch){
+            if (brandsList.get(i).getName() == bestMatch) {
                 //Set the proper Uri from the picture of reference
                 brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
                 //Send the url and uri of the right Brand to the next activity with the Intent
