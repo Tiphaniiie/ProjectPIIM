@@ -35,13 +35,18 @@ import java.util.Date;
 import java.util.List;
 
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
+
     //Var used in the selection of the picture to be analysed
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     private ProgressBar pBar;
     String mCurrentPhotoPath;
+
+    //Var for crop
     Uri uriPic;
+
+    //var to get to next activity
     Bundle extras = new Bundle();
     String bestMatch;
 
@@ -216,8 +221,9 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-
+            //Button to analyse picture
             case R.id.bRequest:
+                //Thread created in order to show the progression widget with the analysis is running
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -248,12 +254,9 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 });
                 pBar.setVisibility(View.VISIBLE);
                 thread.start();
-
-
-
-
                 break;
 
+            //Button to crop picture
             case R.id.bCrop:
                 imageView.setImageDrawable(null);
                 uriPic = Uri.parse("file:///"+mCurrentPhotoPath);

@@ -27,7 +27,7 @@
         android:layout_alignStart="@+id/bCamera" />
 
     <Button
-        android:text="Request"
+        android:text="Analysis"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/bRequest"
@@ -57,6 +57,7 @@
         android:indeterminate="true"
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:clickable="false" />
 
 </RelativeLayout>
