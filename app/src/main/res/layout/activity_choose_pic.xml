@@ -19,33 +19,6 @@
         android:layout_below="@+id/bCamera" />
 
     <Button
-        android:text="Camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="29dp"
-        android:layout_marginTop="13dp"
-        android:id="@+id/bCamera" />
-    <Button
-        android:text="Gallery"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/bGallery"
-        android:layout_above="@+id/imageView"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="63dp" />
-
-    <Button
-        android:text="Request"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/bRequest"
-        android:layout_marginStart="31dp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
         android:text="Crop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -53,5 +26,37 @@
         android:layout_alignParentBottom="true"
         android:layout_alignStart="@+id/bCamera" />
 
+    <Button
+        android:text="Request"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bRequest"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
+
+    <Button
+        android:text="Camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bCamera"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:text="Gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bGallery"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/bRequest" />
+
+    <ProgressBar
+        android:id="@+id/pBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>

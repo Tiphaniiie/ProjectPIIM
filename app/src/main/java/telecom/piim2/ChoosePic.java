@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
@@ -38,8 +39,11 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
+    private ProgressBar pBar;
     String mCurrentPhotoPath;
     Uri uriPic;
+    Bundle extras = new Bundle();
+    String bestMatch;
 
     //Var used in the server calls to get the files
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
@@ -152,6 +156,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_pic);
+        pBar = (ProgressBar) findViewById(R.id.pBar);
+        pBar.setVisibility(View.GONE);
         //permission problem with the gallery pictures
         //The permission is to be verified with the following test
         if (shouldAskPermissions()) {
@@ -212,34 +218,47 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         switch (view.getId()) {
 
             case R.id.bRequest:
-                //Analyse the picture and find the brand that is the best match
-                PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
-                String bestMatch;
-                bestMatch = analyse.analysePic();
-
-                //Retrieve brand that's the best match
-                for (int i = 0; i < brandsList.size(); i++) {
-                    if (brandsList.get(i).getName() == bestMatch) {
-                        //Set the proper Uri from the picture of reference
-                        brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
-                        //Send the url and uri of the right Brand to the next activity with the Intent
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //Analyse the picture and find the brand that is the best match
+                        PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
+                        bestMatch = analyse.analysePic();
+                        final Context context = getApplicationContext();
+                        //Retrieve brand that's the best match
+                        for (int i = 0; i < brandsList.size(); i++) {
+                            if (brandsList.get(i).getName() == bestMatch) {
+                                //Set the proper Uri from the picture of reference
+                                brandsList.get(i).setUri(getImageUri(context, brandsList.get(i).getImage()));
+                                //Send the url and uri of the right Brand to the next activity with the Intent
+                                extras.putString("URL", brandsList.get(i).getUrl());
+                                extras.putParcelable("URI", brandsList.get(i).getUri());
+                            }
+                        }
                         Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
-                        Bundle extras = new Bundle();
-                        extras.putString("URL", brandsList.get(i).getUrl());
-                        extras.putParcelable("URI", brandsList.get(i).getUri());
                         analysisIntent.putExtras(extras);
                         ChoosePic.this.startActivity(analysisIntent);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pBar.setVisibility(View.GONE);
+                        }
+                    });
                     }
-                }
+                });
+                pBar.setVisibility(View.VISIBLE);
+                thread.start();
+
+
+
+
                 break;
 
             case R.id.bCrop:
                 imageView.setImageDrawable(null);
-                //Crop.pickImage(this);
                 uriPic = Uri.parse("file:///"+mCurrentPhotoPath);
-                Log.i("URI", uriPic.toString());
+                Log.d("Crop-URI", uriPic.toString());
                 beginCrop(uriPic);
-
                 break;
         }
     }
