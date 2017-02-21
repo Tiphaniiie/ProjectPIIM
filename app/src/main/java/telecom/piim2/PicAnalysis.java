@@ -2,6 +2,8 @@ package telecom.piim2;
 
 import android.util.Log;
 
+import com.android.volley.RequestQueue;
+
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.opencv_core;
@@ -35,10 +37,15 @@ public class PicAnalysis {
     private CvSVM[] classifiers;
     private Mat vocabulary;
     private String mCurrentPhotoPath;
+    private RequestQueue request;
+
+
 
     public PicAnalysis(String mCurrentPhotoPath, File vocab, ArrayList<Brand> brandsList) {
         this.mCurrentPhotoPath = mCurrentPhotoPath;
         this.vocab = vocab;
+        Log.i("PicAnalysis-vocab", vocab.getName());
+        Log.i("PicAnalysis-vocab", vocab.getAbsolutePath());
         this.brandsList = brandsList;
     }
 

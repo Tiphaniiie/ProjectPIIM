@@ -28,9 +28,10 @@ public class Requests {
     public Requests(RequestQueue queue, String urlRequest, File vocab, ArrayList<Brand> brandsList) {
         this.queue = queue;
         this.urlRequest = urlRequest;
-        this.vocab = vocab;
         this.brandsList = brandsList;
+        this.vocab = vocab;
     }
+
 
     //Save xml and yml files from server
     //Todo find a directory that will clean itself when app is restarted
@@ -62,6 +63,7 @@ public class Requests {
     }
 
     public void sendRequests(){
+
         //Call to get the index
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest + "index.json", null,
                 new Response.Listener<JSONObject>() {
@@ -77,7 +79,8 @@ public class Requests {
                                 public void onResponse(String response) {
                                     //Save file
                                     vocab = writeToFile(response, "vocabulary.yml");
-
+                                    //Make sure the vocab is set in ChoosePic
+                                    ChoosePic.vocab = vocab;
                                 }
                             },
                                     new Response.ErrorListener() {
@@ -115,5 +118,4 @@ public class Requests {
                 });
         queue.add(jsonRequest);
     }
-
 }

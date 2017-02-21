@@ -19,23 +19,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,7 +41,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
     List<Brand> brandsList = new ArrayList<>();
     RequestQueue queue;
-    File vocab;
+    static File vocab;
+    Requests callSvr;
 
 
     protected boolean shouldAskPermissions() {
@@ -133,34 +123,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         imageView.setImageBitmap(bitmap);
     }
 
-    //Save xml and yml files from server
-    //Todo find a directory that will clean itself when app is restarted
-    public static File writeToFile(String data, String fileName) {
-        //Get the directory for the user's public pictures directory.
-        final File path = Environment.getExternalStorageDirectory();
-        //Make sure the path directory exists.
-        if (!path.exists()) {
-            //Make it, if it doesn't exit
-            path.mkdirs();
-        }
-        final File file = new File(path, fileName);
-
-        //Save stream
-        try {
-            file.createNewFile();
-            FileOutputStream fOut = new FileOutputStream(file);
-            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-            myOutWriter.append(data);
-            myOutWriter.close();
-            fOut.flush();
-            fOut.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
 
     //Get the uri from a bitmap
     public Uri getImageUri(Context inContext, Bitmap inImage) {
@@ -197,60 +159,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         });
         //Start the server calls
         queue = Volley.newRequestQueue(this);
-
-        //Call to get the index
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest + "index.json", null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject json) {
-                        //Parsing of the json file
-                        try {
-                            //Get the vocabulary file name from the json
-                            String vocabs = json.getString("vocabulary");
-                            //Get the vocabulary file from server
-                            StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest + vocabs, new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
-                                    //Save file
-                                    vocab = writeToFile(response, "vocabulary.yml");
-
-                                }
-                            },
-                                    new Response.ErrorListener() {
-                                        @Override
-                                        public void onErrorResponse(VolleyError error) {
-                                        }
-                                    });
-                            queue.add(stringRequest);
-                            //Parse the brands part of the json file
-                            JSONArray brands = json.getJSONArray("brands");
-                            //Create as many instances of brands as needed
-                            for (int i = 0; i < brands.length(); i++) {
-                                //Get all objects per brand
-                                JSONObject x = brands.getJSONObject(i);
-                                //Construct the Brand objects
-                                brandsList.add(new Brand(x.getString("brandname"), x.getString("url"), x.getString("classifier")));
-                                JSONArray imgs = x.getJSONArray("images");
-                                for (int j = 0; j < imgs.length(); j++) {
-                                    String y = imgs.getString(j);
-                                    brandsList.get(i).setImgNames(y);
-                                }
-                                brandsList.get(i).setClassifier(queue, urlRequest);
-                                brandsList.get(i).setImage(queue, urlRequest);
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                    }
-                });
-        queue.add(jsonRequest);
-
+        callSvr = new Requests(queue, urlRequest, vocab, (ArrayList<Brand>) brandsList);
+        callSvr.sendRequests();
         Button bRequest = (Button) findViewById(R.id.bRequest);
         bRequest.setOnClickListener(this);
     }
@@ -277,6 +187,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
     @Override
     public void onClick(View view) {
+
         //Analyse the picture and find the brand that is the best match
         PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
         String bestMatch;
