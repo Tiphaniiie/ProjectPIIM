@@ -45,5 +45,13 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
 
+    <Button
+        android:text="Crop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/bCrop"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/bCamera" />
+
 
 </RelativeLayout>

@@ -34,8 +34,8 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".Requests"></activity>
         <activity android:name=".ResultAnalysis"></activity>
+        <activity android:name="com.soundcloud.android.crop.CropImageActivity" />
     </application>
 
 </manifest>

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ProjectPIIM2</string>
+    <string name="action_select">action_select</string>
+    <string name="Pick">Pick</string>
 </resources>

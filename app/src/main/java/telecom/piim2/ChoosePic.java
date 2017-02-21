@@ -15,12 +15,15 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
+import com.soundcloud.android.crop.Crop;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,6 +39,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     String mCurrentPhotoPath;
+    Uri uriPic;
 
     //Var used in the server calls to get the files
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
@@ -132,6 +136,18 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         return Uri.parse(path);
     }
 
+    private void beginCrop(Uri source) {
+        Uri destination = Uri.fromFile(new File(getCacheDir(), "cropped"));
+        Crop.of(source, destination).asSquare().start(this);
+    }
+
+    private void handleCrop(int resultCode, Intent result) {
+        if (resultCode == RESULT_OK) {
+            imageView.setImageURI(Crop.getOutput(result));
+        } else if (resultCode == Crop.RESULT_ERROR) {
+            Toast.makeText(this, Crop.getError(result).getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -163,6 +179,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         callSvr.sendRequests();
         Button bRequest = (Button) findViewById(R.id.bRequest);
         bRequest.setOnClickListener(this);
+        Button bCrop = (Button) findViewById(R.id.bCrop);
+        bCrop.setOnClickListener(this);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -183,29 +201,46 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             //Make sure the picture has the right dimensions
             setPic();
         }
+        if (requestCode == Crop.REQUEST_CROP) {
+            handleCrop(resultCode, data);
+        }
     }
+
 
     @Override
     public void onClick(View view) {
+        switch (view.getId()) {
 
-        //Analyse the picture and find the brand that is the best match
-        PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
-        String bestMatch;
-        bestMatch = analyse.analysePic();
+            case R.id.bRequest:
+                //Analyse the picture and find the brand that is the best match
+                PicAnalysis analyse = new PicAnalysis(mCurrentPhotoPath, vocab, (ArrayList<Brand>) brandsList);
+                String bestMatch;
+                bestMatch = analyse.analysePic();
 
-        //Retrieve brand that's the best match
-        for (int i = 0; i < brandsList.size(); i++) {
-            if (brandsList.get(i).getName() == bestMatch) {
-                //Set the proper Uri from the picture of reference
-                brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
-                //Send the url and uri of the right Brand to the next activity with the Intent
-                Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
-                Bundle extras = new Bundle();
-                extras.putString("URL", brandsList.get(i).getUrl());
-                extras.putParcelable("URI", brandsList.get(i).getUri());
-                analysisIntent.putExtras(extras);
-                ChoosePic.this.startActivity(analysisIntent);
-            }
+                //Retrieve brand that's the best match
+                for (int i = 0; i < brandsList.size(); i++) {
+                    if (brandsList.get(i).getName() == bestMatch) {
+                        //Set the proper Uri from the picture of reference
+                        brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
+                        //Send the url and uri of the right Brand to the next activity with the Intent
+                        Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
+                        Bundle extras = new Bundle();
+                        extras.putString("URL", brandsList.get(i).getUrl());
+                        extras.putParcelable("URI", brandsList.get(i).getUri());
+                        analysisIntent.putExtras(extras);
+                        ChoosePic.this.startActivity(analysisIntent);
+                    }
+                }
+                break;
+
+            case R.id.bCrop:
+                imageView.setImageDrawable(null);
+                //Crop.pickImage(this);
+                uriPic = Uri.parse("file:///"+mCurrentPhotoPath);
+                Log.i("URI", uriPic.toString());
+                beginCrop(uriPic);
+
+                break;
         }
     }
 }

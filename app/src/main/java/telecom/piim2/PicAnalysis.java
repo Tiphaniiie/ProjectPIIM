@@ -44,8 +44,6 @@ public class PicAnalysis {
     public PicAnalysis(String mCurrentPhotoPath, File vocab, ArrayList<Brand> brandsList) {
         this.mCurrentPhotoPath = mCurrentPhotoPath;
         this.vocab = vocab;
-        Log.i("PicAnalysis-vocab", vocab.getName());
-        Log.i("PicAnalysis-vocab", vocab.getAbsolutePath());
         this.brandsList = brandsList;
     }
 
