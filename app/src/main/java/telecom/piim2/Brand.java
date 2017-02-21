@@ -33,10 +33,12 @@ public class Brand {
     private ArrayList<String> imgNames;
     private Uri uri;
 
+    //Constructor
     public Brand(String name, String url, String fileName) {
         this.url = url;
         this.name = name;
         this.fileName = fileName;
+        //Todo eventually put classifiers as a variable
         this.xmlPath = "classifiers/"+fileName;
         this.imgNames = new ArrayList<>();
     }
@@ -63,18 +65,19 @@ public class Brand {
         return classifier;
     }
 
+    //For each brand, get the classifier (xml file)
     public void setClassifier(RequestQueue queue, String urlRequest) {
         StringRequest stringRequest2 = new StringRequest(Request.Method.GET, urlRequest+this.getXmlPath(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 classifier = Requests.writeToFile(response, fileName);
-                Log.i("classifier : ", classifier.getName());
+                Log.d("Classifier : ", classifier.getName());
             }
         },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-
+                        Log.d("Classifier", "load	error");
                     }
                 });
         queue.add(stringRequest2);
@@ -85,36 +88,29 @@ public class Brand {
         return image;
     }
 
-
+    //Get the picture of reference for each brand
     public void setImage(RequestQueue queue, String urlRequest) {
+        //Todo eventually get train-images in a variable
         ImageRequest imageRequest = new ImageRequest(urlRequest+"train-images/"+this.getImgNames().get(0), new Response.Listener<Bitmap>() {
             @Override
             public void onResponse(Bitmap bitmap) {
-                Log.i("TEEEEEST",bitmap.toString());
+                Log.d("Picture",bitmap.toString());
                 image = bitmap;
             }
         },
                 maxWidth, maxHeight, null, RGB_565, new Response.ErrorListener() {
             public void onErrorResponse(VolleyError error) {
-                Log.i("HERE", "load	error");
+                Log.d("Picture", "load	error");
             }
         });
         queue.add(imageRequest);
-        this.image = image;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
     }
 
     public List<String> getImgNames() {
         return imgNames;
     }
 
+    // Add new picture names to the list
     public void setImgNames(String imgName) {
         this.imgNames.add(imgName);
     }

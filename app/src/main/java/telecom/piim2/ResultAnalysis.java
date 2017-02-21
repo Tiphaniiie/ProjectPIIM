@@ -18,13 +18,19 @@ public class ResultAnalysis extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result_analysis);
         ImageView imageView2 = (ImageView) findViewById(R.id.imageView2);
+
+        //Get the url and uri from the previous activity
         Intent i = getIntent();
         Bundle extras = i.getExtras();
         webSite = extras.getString("URL");
         Uri result = extras.getParcelable("URI");
+
+        //Show the picture of reference
         imageView2.setImageURI(result);
-        Log.i("image : ", result.toString());
+        Log.d("Reference : ", result.toString());
         Button bWebsite = (Button) findViewById(R.id.bWebsite);
+
+        //Go to the brand's website
         bWebsite.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {

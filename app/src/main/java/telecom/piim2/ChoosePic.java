@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,7 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.v4.content.FileProvider;
@@ -43,10 +41,8 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,13 +59,13 @@ import static org.bytedeco.javacpp.opencv_features2d.KeyPoint;
 import static org.bytedeco.javacpp.opencv_highgui.imread;
 
 public class ChoosePic extends AppCompatActivity implements View.OnClickListener {
-
+    //Var used in the selection of the picture to be analysed
     private static final int CAMERA_REQUEST = 1;
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     String mCurrentPhotoPath;
-    File vocab;
 
+    //Var used in the analysis of the picture
     SIFT detector;
     FlannBasedMatcher matcher;
     BOWImgDescriptorExtractor bowide;
@@ -79,9 +75,12 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     KeyPoint keypoints = new KeyPoint();
     Mat inputDescriptors = new Mat();
 
+    //Var used in the server calls to get the files
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
     List<Brand> brandsList = new ArrayList<>();
     RequestQueue queue;
+    File vocab;
+
 
     protected boolean shouldAskPermissions() {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
@@ -99,16 +98,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     }
 
     //for the camera picture
-    private Bitmap getBitmapFromUri(Uri uri) throws IOException {
-        ParcelFileDescriptor parcelFileDescriptor =
-                getContentResolver().openFileDescriptor(uri, "r");
-        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-        Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
-        parcelFileDescriptor.close();
-        return image;
-    }
-
-    //for the camera picture
     private File createImageFile() throws IOException {
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -119,8 +108,6 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -172,46 +159,21 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         imageView.setImageBitmap(bitmap);
     }
-
-    public static File ToCache(Context context, String Path, String fileName) {
-        InputStream input;
-        FileOutputStream output;
-        byte[] buffer;
-        String filePath = context.getCacheDir() + "/" + fileName;
-        File file = new File(filePath);
-        AssetManager assetManager = context.getAssets();
-
-        try {
-            input = assetManager.open(Path);
-            buffer = new byte[input.available()];
-            input.read(buffer);
-            input.close();
-
-            output = new FileOutputStream(filePath);
-            output.write(buffer);
-            output.close();
-            return file;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
+    //Save xml and yml files from server
+    //Todo find a directory that will clean itself when app is restarted
     public static File writeToFile(String data, String fileName)
     {
-        // Get the directory for the user's public pictures directory.
+        //Get the directory for the user's public pictures directory.
         final File path = Environment.getExternalStorageDirectory();
-        //final File path = filepath;
-        // Make sure the path directory exists.
+        //Make sure the path directory exists.
         if(!path.exists())
         {
-            // Make it, if it doesn't exit
+            //Make it, if it doesn't exit
             path.mkdirs();
         }
         final File file = new File(path, fileName);
-        // Save your stream, don't forget to flush() it before closing it.
 
+        //Save stream
         try
         {
             file.createNewFile();
@@ -228,6 +190,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
         return file;
     }
+    //Get the uri from a bitmap
     public Uri getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
@@ -259,18 +222,23 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 startActivityForResult(galleryIntent, RESULT_LOAD_IMAGE);
             }
         });
+        //Start the server calls
         queue = Volley.newRequestQueue(this);
+
+        //Call to get the index
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest+"index.json", null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject json) {
-                        //traitement du fichier json
+                        //Parsing of the json file
                         try {
+                            //Get the vocabulary file name from the json
                             String vocabs = json.getString("vocabulary");
+                            //Get the vocabulary file from server
                             StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest+vocabs, new Response.Listener<String>() {
                                 @Override
                                 public void onResponse(String response) {
-                                    //	Display	the	first	500	characters	of	the	response	string.
+                                    //Save file
                                     vocab = writeToFile(response, "vocabulary.yml");
 
                                 }
@@ -281,9 +249,13 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                                         }
                                     });
                             queue.add(stringRequest);
+                            //Parse the brands part of the json file
                             JSONArray brands = json.getJSONArray("brands");
+                            //Create as many instances of brands as needed
                             for (int i = 0; i<brands.length(); i++){
+                                //Get all objects per brand
                                 JSONObject x = brands.getJSONObject(i);
+                                //Construct the Brand objects
                                 brandsList.add(new Brand(x.getString("brandname"), x.getString("url"),x.getString("classifier")));
                                 JSONArray imgs = x.getJSONArray("images");
                                 for (int j = 0; j<imgs.length(); j++){
@@ -306,17 +278,17 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                 });
         queue.add(jsonRequest);
 
-        //getClassifier part
-
         Button bRequest = (Button) findViewById(R.id.bRequest);
         bRequest.setOnClickListener(this);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            //Make sure the picture has the right dimensions
             setPic();
         }
         if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
+            //Get the URI from the gallery picture chosen
             Uri selectedImage = data.getData();
             String[] filePathColumn = {Images.Media.DATA};
             Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
@@ -324,35 +296,40 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
             mCurrentPhotoPath = cursor.getString(columnIndex);
             cursor.close();
+
+            //Make sure the picture has the right dimensions
             setPic();
         }
     }
 
     @Override
     public void onClick(View view) {
-
+        //Start the analysis of the picture
+        //Create the vocabulary
         final Mat vocabulary;
         Loader.load(opencv_core.class);
         opencv_core.CvFileStorage storage = cvOpenFileStorage(vocab.getAbsolutePath(), null, CV_STORAGE_READ);
         Pointer p = cvReadByName(storage, null, "vocabulary", cvAttrList());
         opencv_core.CvMat cvMat = new opencv_core.CvMat(p);
         vocabulary = new Mat(cvMat);
-        Log.i("HERE", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
+        Log.d("Vocabulary", "vocabulary loaded " + vocabulary.rows() + " x " + vocabulary.cols());
         cvReleaseFileStorage(storage);
-        //create SIFT feature point extracter
 
+        //create SIFT feature point extracter
         // default parameters ""opencv2/features2d/features2d.hpp""
         detector = new SIFT(0, 3, 0.04, 10, 1.6);
-        //create a matcher with FlannBased Euclidien distance (possible also with BruteForce-Hamming)
 
+        //create a matcher with FlannBased Euclidien distance (possible also with BruteForce-Hamming)
         matcher = new FlannBasedMatcher();
 
         //create BoF (or BoW) descriptor extractor
-
         bowide = new BOWImgDescriptorExtractor(detector.asDescriptorExtractor(), matcher);
-        //Set the dictionary with the vocabulary we created in the first step
+
+        //Set the dictionary with the vocabulary
         bowide.setVocabulary(vocabulary);
-        Log.i("HEEEEERE", "vocab is set");
+        Log.d("Vocabulary", "vocab is set");
+
+        //Create classifiers from server files
         class_names = new String[brandsList.size()];
         for (int i = 0; i< brandsList.size(); i++){
             class_names[i] = brandsList.get(i).getName();
@@ -360,36 +337,45 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         classifiers = new CvSVM[brandsList.size()];
 
         for (int i = 0; i < brandsList.size(); i++) {
-            Log.i("HEREAGAINNN", "Ok. Creating class name from " + class_names[i]);
+            Log.d("Classifier", "Ok. Creating class name from " + class_names[i]);
             //open the file to write the resultant descriptor
             classifiers[i] = new CvSVM();
             classifiers[i].load(brandsList.get(i).getClassifier().getAbsolutePath());
         }
-        Log.i("HEEEEEEEEEEEEEERE", "ok");
+        Log.d("Classifier", "ok");
+
+        //Transform chosen picture to Mat
         Mat imageTest = imread(mCurrentPhotoPath, 1);
+
+        //Analyse it
         detector.detectAndCompute(imageTest, Mat.EMPTY, keypoints, inputDescriptors);
         bowide.compute(imageTest, keypoints, response_hist);
+
         // Finding best match
         float minf = Float.MAX_VALUE;
         String bestMatch = null;
         long timePrediction = System.currentTimeMillis();
+
         // loop for all classes
         for (int j = 0; j < brandsList.size(); j++) {
             // classifier prediction based on reconstructed histogram
             float res = classifiers[j].predict(response_hist, true);
-            //System.out.println(class_names[i] + " is " + res);
             if (res < minf) {
                 minf = res;
                 bestMatch = class_names[j];
             }
         }
+
         timePrediction = System.currentTimeMillis() - timePrediction;
-        Log.i("ICIIIIII", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
+
+        Log.d("Analysis", mCurrentPhotoPath + "  predicted as " + bestMatch + " in " + timePrediction + " ms");
         for (int i =0; i<brandsList.size(); i++){
+            //Get the right Brand
             if (brandsList.get(i).getName() == bestMatch){
-                Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
-                Brand finalBrand = brandsList.get(i);
+                //Set the proper Uri from the picture of reference
                 brandsList.get(i).setUri(getImageUri(this, brandsList.get(i).getImage()));
+                //Send the url and uri of the right Brand to the next activity with the Intent
+                Intent analysisIntent = new Intent(ChoosePic.this, ResultAnalysis.class);
                 Bundle extras = new Bundle();
                 extras.putString("URL", brandsList.get(i).getUrl());
                 extras.putParcelable("URI", brandsList.get(i).getUri());

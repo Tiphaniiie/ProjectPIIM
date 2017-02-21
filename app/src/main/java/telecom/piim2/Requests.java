@@ -35,15 +35,13 @@ import static android.graphics.Bitmap.Config.RGB_565;
 import static com.android.volley.Response.ErrorListener;
 import static com.android.volley.Response.Listener;
 
+// DEBUG CLASS FOR SERVER CALLS. NOT USED IN ACTUAL APP ANYMORE
 public class Requests extends AppCompatActivity implements View.OnClickListener {
     static TextView textView;
     ImageView imageView2;
     String index = "index.json";
-    String url = "http://www-rech.telecom-lille.fr/nonfreesift/index.json";
-    String url3 = "http://www-rech.telecom-lille.fr/nonfreesift/train-images/Coca_12.jpg";
     String url2 = "http://www-rech.telecom-lille.fr/nonfreesift/vocabulary.yml";
     String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
-    String filepath = Environment.DIRECTORY_DCIM+"/PIIMfiles/";
     List<Brand> brandsList = new ArrayList<>();
 
     public static File writeToFile(String data, String fileName)
