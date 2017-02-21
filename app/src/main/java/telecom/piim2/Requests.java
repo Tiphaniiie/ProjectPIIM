@@ -1,22 +1,13 @@
 package telecom.piim2;
 
-import android.graphics.Bitmap;
-import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,39 +18,34 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.List;
 
-import static android.R.attr.maxHeight;
-import static android.R.attr.maxWidth;
-import static android.graphics.Bitmap.Config.RGB_565;
-import static com.android.volley.Response.ErrorListener;
-import static com.android.volley.Response.Listener;
+public class Requests {
+    private RequestQueue queue;
+    private String urlRequest;
+    private File vocab;
+    private ArrayList<Brand> brandsList;
 
-// DEBUG CLASS FOR SERVER CALLS. NOT USED IN ACTUAL APP ANYMORE
-public class Requests extends AppCompatActivity implements View.OnClickListener {
-    static TextView textView;
-    ImageView imageView2;
-    String index = "index.json";
-    String url2 = "http://www-rech.telecom-lille.fr/nonfreesift/vocabulary.yml";
-    String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
-    List<Brand> brandsList = new ArrayList<>();
+    public Requests(RequestQueue queue, String urlRequest, File vocab, ArrayList<Brand> brandsList) {
+        this.queue = queue;
+        this.urlRequest = urlRequest;
+        this.vocab = vocab;
+        this.brandsList = brandsList;
+    }
 
-    public static File writeToFile(String data, String fileName)
-    {
-        // Get the directory for the user's public pictures directory.
+    //Save xml and yml files from server
+    //Todo find a directory that will clean itself when app is restarted
+    public static File writeToFile(String data, String fileName) {
+        //Get the directory for the user's public pictures directory.
         final File path = Environment.getExternalStorageDirectory();
-        //final File path = filepath;
-        // Make sure the path directory exists.
-        if(!path.exists())
-        {
-            // Make it, if it doesn't exit
+        //Make sure the path directory exists.
+        if (!path.exists()) {
+            //Make it, if it doesn't exit
             path.mkdirs();
         }
         final File file = new File(path, fileName);
-        // Save your stream, don't forget to flush() it before closing it.
 
-        try
-        {
+        //Save stream
+        try {
             file.createNewFile();
             FileOutputStream fOut = new FileOutputStream(file);
             OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
@@ -71,112 +57,63 @@ public class Requests extends AppCompatActivity implements View.OnClickListener 
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //textView.setText(file.getAbsolutePath());
+
         return file;
     }
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_requests);
-        textView = (TextView) findViewById(R.id.textView);
-        imageView2 = (ImageView) findViewById(R.id.imageView2);
-        Button bString = (Button) findViewById(R.id.bString);
-        bString.setOnClickListener(this);
-        Button bJson = (Button) findViewById(R.id.bJson);
-        bJson.setOnClickListener(this);
-        Button bPic = (Button) findViewById(R.id.bPic);
-        bPic.setOnClickListener(this);
-    }
 
-    @Override
-    public void onClick(View v) {
-       final RequestQueue queue = Volley.newRequestQueue(this);
-        switch (v.getId()) {
-
-            case R.id.bString:
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url2, new Listener<String>() {
+    public void sendRequests(){
+        //Call to get the index
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest + "index.json", null,
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(String response) {
-                        //	Display	the	first	500	characters	of	the	response	string.
+                    public void onResponse(JSONObject json) {
+                        //Parsing of the json file
+                        try {
+                            //Get the vocabulary file name from the json
+                            String vocabs = json.getString("vocabulary");
+                            //Get the vocabulary file from server
+                            StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest + vocabs, new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    //Save file
+                                    vocab = writeToFile(response, "vocabulary.yml");
 
-                        textView.setText("Response	is:	" + response.substring(0, 500));
-                    }
-                },
-                        new ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                textView.setText("That	didn't	work!");
-                            }
-                        });
-                queue.add(stringRequest);
-                break;
-
-            case R.id.bJson:
-                JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, urlRequest+index, null,
-                        new Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject json) {
-                                //traitement du fichier json
-                                try {
-                                    String vocab = json.getString("vocabulary");
-                                    StringRequest stringRequest = new StringRequest(Request.Method.GET, urlRequest+vocab, new Listener<String>() {
-                                        @Override
-                                        public void onResponse(String response) {
-                                            //	Display	the	first	500	characters	of	the	response	string.
-                                            writeToFile(response, "vocabulary.yml");
-
-                                        }
-                                    },
-                                            new ErrorListener() {
-                                                @Override
-                                                public void onErrorResponse(VolleyError error) {
-                                                    textView.setText("That	didn't	work!");
-                                                }
-                                            });
-                                    queue.add(stringRequest);
-                                    JSONArray brands = json.getJSONArray("brands");
-                                    for (int i = 0; i<brands.length(); i++){
-                                        JSONObject x = brands.getJSONObject(i);
-                                        brandsList.add(new Brand(x.getString("brandname"), x.getString("url"),x.getString("classifier")));
-                                        JSONArray imgs = x.getJSONArray("images");
-                                        for (int j = 0; j<imgs.length(); j++){
-                                            String y = imgs.getString(j);
-                                            brandsList.get(i).setImgNames(y);
-                                            Log.i("listes : ", i+" "+brandsList.get(i).getImgNames().get(j).toString());
-                                        }
-                                        brandsList.get(i).setClassifier(queue, urlRequest);
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
                                 }
+                            },
+                                    new Response.ErrorListener() {
+                                        @Override
+                                        public void onErrorResponse(VolleyError error) {
+                                        }
+                                    });
+                            queue.add(stringRequest);
+                            //Parse the brands part of the json file
+                            JSONArray brands = json.getJSONArray("brands");
+                            //Create as many instances of brands as needed
+                            for (int i = 0; i < brands.length(); i++) {
+                                //Get all objects per brand
+                                JSONObject x = brands.getJSONObject(i);
+                                //Construct the Brand objects
+                                brandsList.add(new Brand(x.getString("brandname"), x.getString("url"), x.getString("classifier")));
+                                JSONArray imgs = x.getJSONArray("images");
+                                for (int j = 0; j < imgs.length(); j++) {
+                                    String y = imgs.getString(j);
+                                    brandsList.get(i).setImgNames(y);
+                                }
+                                brandsList.get(i).setClassifier(queue, urlRequest);
+                                brandsList.get(i).setImage(queue, urlRequest);
                             }
-                        },
-                        new ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                textView.setText("That	didn't	work!");
-                            }
-                        });
-                queue.add(jsonRequest);
-                break;
 
-            case R.id.bPic:
-                ImageRequest imageRequest = new ImageRequest(urlRequest+"train-images/"+brandsList.get(0).getImgNames().get(0), new Listener<Bitmap>() {
-                    @Override
-                    public void onResponse(Bitmap bitmap) {
-                        Log.i("TEEEEEST",bitmap.toString());
-                        imageView2.setImageBitmap(bitmap);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 },
-                        maxWidth, maxHeight, null, RGB_565, new ErrorListener() {
+                new Response.ErrorListener() {
+                    @Override
                     public void onErrorResponse(VolleyError error) {
-                        Log.i("HERE", "load	error");
                     }
                 });
-                queue.add(imageRequest);
-                break;
-        }
-
-
+        queue.add(jsonRequest);
     }
+
 }
