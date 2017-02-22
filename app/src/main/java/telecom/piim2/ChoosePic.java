@@ -267,6 +267,10 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
                     }
                 });
                 pBar.setVisibility(View.VISIBLE);
+                bRequest.setVisibility(View.GONE);
+                bCrop.setVisibility(View.GONE);
+                bCamera.setVisibility(View.GONE);
+                bGallery.setVisibility(View.GONE);
                 thread.start();
                 break;
 
