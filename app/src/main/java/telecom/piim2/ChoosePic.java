@@ -42,6 +42,10 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private ImageView imageView;
     private ProgressBar pBar;
     String mCurrentPhotoPath;
+    Button bCamera;
+    Button bGallery;
+    Button bRequest;
+    Button bCrop;
 
     //Var for crop
     Uri uriPic;
@@ -161,7 +165,11 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_pic);
+        bCamera = (Button) findViewById(R.id.bCamera);
+        bGallery = (Button) findViewById(R.id.bGallery);
         pBar = (ProgressBar) findViewById(R.id.pBar);
+        bRequest = (Button) findViewById(R.id.bRequest);
+        bCrop = (Button) findViewById(R.id.bCrop);
         pBar.setVisibility(View.GONE);
         //permission problem with the gallery pictures
         //The permission is to be verified with the following test
@@ -169,14 +177,14 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             askPermissions();
         }
         imageView = (ImageView) findViewById(R.id.imageView);
-        Button bCamera = (Button) findViewById(R.id.bCamera);
+
         bCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dispatchTakePictureIntent();
             }
         });
-        Button bGallery = (Button) findViewById(R.id.bGallery);
+
         bGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -188,9 +196,11 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         queue = Volley.newRequestQueue(this);
         callSvr = new Requests(queue, urlRequest, vocab, (ArrayList<Brand>) brandsList);
         callSvr.sendRequests();
-        Button bRequest = (Button) findViewById(R.id.bRequest);
+
+        bRequest.setVisibility(View.GONE);
         bRequest.setOnClickListener(this);
-        Button bCrop = (Button) findViewById(R.id.bCrop);
+
+        bCrop.setVisibility(View.GONE);
         bCrop.setOnClickListener(this);
     }
 
@@ -198,6 +208,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
             //Make sure the picture has the right dimensions
             setPic();
+            bCrop.setVisibility(View.VISIBLE);
+            bRequest.setVisibility(View.VISIBLE);
         }
         if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
             //Get the URI from the gallery picture chosen
@@ -211,6 +223,8 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
 
             //Make sure the picture has the right dimensions
             setPic();
+            bCrop.setVisibility(View.VISIBLE);
+            bRequest.setVisibility(View.VISIBLE);
         }
         if (requestCode == Crop.REQUEST_CROP) {
             handleCrop(resultCode, data);
@@ -223,7 +237,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         switch (view.getId()) {
             //Button to analyse picture
             case R.id.bRequest:
-                //Thread created in order to show the progression widget with the analysis is running
+                //Thread created in order to show the progression widget while the analysis is running
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
