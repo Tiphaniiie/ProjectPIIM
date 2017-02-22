@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
@@ -41,25 +42,26 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private static int RESULT_LOAD_IMAGE = 2;
     private ImageView imageView;
     private ProgressBar pBar;
-    String mCurrentPhotoPath;
-    Button bCamera;
-    Button bGallery;
-    Button bRequest;
-    Button bCrop;
+    private String mCurrentPhotoPath;
+    private Button bCamera;
+    private Button bGallery;
+    private Button bRequest;
+    private Button bCrop;
+    private TextView text;
 
     //Var for crop
-    Uri uriPic;
+    private Uri uriPic;
 
     //var to get to next activity
-    Bundle extras = new Bundle();
-    String bestMatch;
+    private Bundle extras = new Bundle();
+    private String bestMatch;
 
     //Var used in the server calls to get the files
-    String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
-    List<Brand> brandsList = new ArrayList<>();
-    RequestQueue queue;
-    static File vocab;
-    Requests callSvr;
+    private String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
+    private List<Brand> brandsList = new ArrayList<>();
+    private RequestQueue queue;
+    public static File vocab;
+    private Requests callSvr;
 
 
     protected boolean shouldAskPermissions() {
@@ -170,6 +172,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
         pBar = (ProgressBar) findViewById(R.id.pBar);
         bRequest = (Button) findViewById(R.id.bRequest);
         bCrop = (Button) findViewById(R.id.bCrop);
+        text = (TextView) findViewById(R.id.text);
         pBar.setVisibility(View.GONE);
         //permission problem with the gallery pictures
         //The permission is to be verified with the following test
@@ -210,6 +213,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             setPic();
             bCrop.setVisibility(View.VISIBLE);
             bRequest.setVisibility(View.VISIBLE);
+            text.setVisibility(View.GONE);
         }
         if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK && null != data) {
             //Get the URI from the gallery picture chosen
@@ -225,6 +229,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
             setPic();
             bCrop.setVisibility(View.VISIBLE);
             bRequest.setVisibility(View.VISIBLE);
+            text.setVisibility(View.GONE);
         }
         if (requestCode == Crop.REQUEST_CROP) {
             handleCrop(resultCode, data);
