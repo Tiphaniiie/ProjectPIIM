@@ -159,6 +159,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private void handleCrop(int resultCode, Intent result) {
         if (resultCode == RESULT_OK) {
             imageView.setImageURI(Crop.getOutput(result));
+            mCurrentPhotoPath = Crop.getOutput(result).getPath();
         } else if (resultCode == Crop.RESULT_ERROR) {
             Toast.makeText(this, Crop.getError(result).getMessage(), Toast.LENGTH_SHORT).show();
         }
