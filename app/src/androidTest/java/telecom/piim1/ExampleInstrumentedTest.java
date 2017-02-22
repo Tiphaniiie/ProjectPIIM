@@ -1,4 +1,4 @@
-package com.example.wannous.demo;
+package telecom.piim1;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.wannous.demo", appContext.getPackageName());
+        assertEquals("telecom.piim1", appContext.getPackageName());
     }
 }
