@@ -1,6 +1,7 @@
 package telecom.piim2;
 
 import android.os.Environment;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -99,8 +100,10 @@ public class Requests {
                                 brandsList.add(new Brand(x.getString("brandname"), x.getString("url"), x.getString("classifier")));
                                 JSONArray imgs = x.getJSONArray("images");
                                 for (int j = 0; j < imgs.length(); j++) {
-                                    String y = imgs.getString(j);
-                                    brandsList.get(i).setImgNames(y);
+                                    if (imgs.getString(j)!= null){
+                                        String y = imgs.getString(j);
+                                        brandsList.get(i).setImgNames(y);
+                                    }
                                 }
                                 brandsList.get(i).setClassifier(queue, urlRequest);
                                 brandsList.get(i).setImage(queue, urlRequest);
@@ -114,6 +117,7 @@ public class Requests {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        Log.e("ERROR", "pas de connexion");
                     }
                 });
         queue.add(jsonRequest);

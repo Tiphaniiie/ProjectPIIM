@@ -57,7 +57,7 @@ public class ChoosePic extends AppCompatActivity implements View.OnClickListener
     private String bestMatch;
 
     //Var used in the server calls to get the files
-    private String urlRequest = "http://www-rech.telecom-lille.fr/nonfreesift/";
+    private String urlRequest = "http://www-rech.telecom-lille.fr/freeorb/";
     private List<Brand> brandsList = new ArrayList<>();
     private RequestQueue queue;
     public static File vocab;
